@@ -1,0 +1,419 @@
+generator client {
+provider = "prisma-client-js"
+}
+datasource db {
+provider = "postgresql"
+url = env("DATABASE_URL")
+}
+
+model User {
+id String @id @default(cuid())
+email String @unique
+passwordHash String
+name String?
+role UserRole @default(OWNER)
+active Boolean @default(true)
+sessionVersion Int @default(0)
+isSample Boolean @default(false)
+createdAt DateTime @default(now())
+areas Area[]
+goals Goal[]
+projects Project[]
+tasks Task[]
+people Person[]
+commitments Commitment[]
+events Event[]
+linkedNotes Note[]
+moneyItems MoneyItem[]
+experiments Experiment[]
+weeklyReviews WeeklyReview[]
+settings Settings?
+}
+model LoginRateLimit {
+id String @id @default(cuid())
+email String
+ip String
+failures Int @default(0)
+windowStartedAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+@@unique([email, ip])
+@@index([updatedAt])
+}
+enum UserRole {
+OWNER
+}
+enum AreaKind {
+SCHOOL
+GENERAL
+JOB
+PERSONAL
+PEOPLE
+BUSINESS
+LEARNING
+}
+enum GoalHorizon {
+SEASON
+ONE_YEAR
+FIVE_YEAR
+}
+enum GoalStatus {
+ACTIVE
+DONE
+PAUSED
+ARCHIVED
+}
+enum ProjectKind {
+GENERAL
+CLASS
+BUSINESS
+LEARNING
+JOB
+PERSONAL
+}
+enum ProjectStatus {
+ACTIVE
+SOMEDAY
+DONE
+ARCHIVED
+}
+enum TaskStatus {
+INBOX
+TODO
+DOING
+WAITING
+DONE
+CANCELED
+}
+enum TaskKind {
+TASK
+ASSIGNMENT
+EXAM
+STUDY
+SHIFT_DELIVERABLE
+FOLLOW_UP
+APPOINTMENT
+PAPERWORK
+PRACTICE
+}
+enum RecurrenceRule {
+NONE
+DAILY
+WEEKLY
+MONTHLY
+EVERY_N_DAYS
+}
+enum CommitmentDirection {
+I_PROMISED
+THEY_PROMISED
+}
+enum CommitmentStatus {
+OPEN
+DONE
+DROPPED
+}
+enum EventKind {
+CLASS
+SHIFT
+APPOINTMENT
+SHARED_PLAN
+STUDY_BLOCK
+OTHER
+}
+enum NoteKind {
+NOTE
+IDEA
+MEETING
+REFLECTION
+RESOURCE
+}
+enum MoneyKind {
+INCOME
+BILL
+SUBSCRIPTION
+SAVINGS_GOAL
+}
+enum ExperimentStatus {
+PLANNED
+RUNNING
+COMPLETE
+CANCELED
+}
+enum PrioritizationMethod {
+TOP3
+EISENHOWER
+ABCDE
+}
+
+model Area {
+id String @id @default(cuid())
+userId String
+user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+name String
+kind AreaKind @default(GENERAL)
+color String @default("#4f46e5")
+icon String @default("circle")
+sortOrder Int @default(0)
+archived Boolean @default(false)
+isSample Boolean @default(false)
+createdAt DateTime @default(now())
+projects Project[]
+tasks Task[]
+events Event[]
+notes Note[]
+goals Goal[]
+@@unique([userId,name])
+@@index([userId,sortOrder])
+}
+model Goal {
+id String @id @default(cuid())
+userId String
+user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+title String
+description String @default("")
+horizon GoalHorizon
+seasonLabel String?
+areaId String?
+area Area? @relation(fields:[areaId],references:[id],onDelete:SetNull)
+parentGoalId String?
+parentGoal Goal? @relation("GoalTree",fields:[parentGoalId],references:[id],onDelete:SetNull)
+children Goal[] @relation("GoalTree")
+status GoalStatus @default(ACTIVE)
+targetDate DateTime?
+successDefinition String @default("")
+isSample Boolean @default(false)
+createdAt DateTime @default(now())
+projects Project[]
+notes Note[]
+@@index([userId,horizon])
+}
+model Project {
+id String @id @default(cuid())
+userId String
+user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+title String
+areaId String
+area Area @relation(fields:[areaId],references:[id],onDelete:Restrict)
+goalId String?
+goal Goal? @relation(fields:[goalId],references:[id],onDelete:SetNull)
+kind ProjectKind @default(GENERAL)
+status ProjectStatus @default(ACTIVE)
+outcome String @default("")
+successDefinition String @default("")
+financialTarget Int?
+startDate DateTime?
+targetDate DateTime?
+courseCode String?
+instructor String?
+scheduleText String?
+term String?
+valueScore Int?
+effortScore Int?
+costScore Int?
+interestScore Int?
+timingScore Int?
+isSample Boolean @default(false)
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+milestones Milestone[]
+tasks Task[]
+events Event[]
+notes Note[]
+commitments Commitment[]
+moneyItems MoneyItem[]
+experiments Experiment[]
+@@index([userId,status])
+@@index([areaId])
+}
+model Milestone {
+id String @id @default(cuid())
+projectId String
+project Project @relation(fields:[projectId],references:[id],onDelete:Cascade)
+title String
+dueDate DateTime?
+done Boolean @default(false)
+isSample Boolean @default(false)
+createdAt DateTime @default(now())
+@@index([projectId,dueDate])
+}
+model Task {
+id String @id @default(cuid())
+userId String
+user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+title String
+notes String @default("")
+areaId String?
+area Area? @relation(fields:[areaId],references:[id],onDelete:SetNull)
+projectId String?
+project Project? @relation(fields:[projectId],references:[id],onDelete:SetNull)
+parentTaskId String?
+parentTask Task? @relation("TaskTree",fields:[parentTaskId],references:[id],onDelete:Cascade)
+subtasks Task[] @relation("TaskTree")
+status TaskStatus @default(INBOX)
+priority Int @default(2)
+dueDate DateTime?
+plannedDate DateTime?
+estimateMin Int @default(30)
+topPriorityOn DateTime?
+recurrence RecurrenceRule @default(NONE)
+recurrenceEvery Int?
+recurrenceWeekdays Int[] @default([])
+waitingOn String @default("")
+kind TaskKind @default(TASK)
+completedAt DateTime?
+recurringFromId String?
+isSample Boolean @default(false)
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+commitments Commitment[]
+linkedNotes Note[]
+@@index([userId,status])
+@@index([dueDate])
+@@index([plannedDate])
+@@index([projectId])
+}
+model Person {
+id String @id @default(cuid())
+userId String
+user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+name String
+relationship String @default("")
+contact String @default("")
+notes String @default("")
+isSample Boolean @default(false)
+createdAt DateTime @default(now())
+commitments Commitment[]
+notesLinked Note[]
+@@index([userId,name])
+}
+model Commitment {
+id String @id @default(cuid())
+userId String
+user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+personId String?
+person Person? @relation(fields:[personId],references:[id],onDelete:SetNull)
+direction CommitmentDirection
+description String
+dueDate DateTime?
+followUpDate DateTime?
+status CommitmentStatus @default(OPEN)
+projectId String?
+project Project? @relation(fields:[projectId],references:[id],onDelete:SetNull)
+taskId String?
+task Task? @relation(fields:[taskId],references:[id],onDelete:SetNull)
+isSample Boolean @default(false)
+createdAt DateTime @default(now())
+@@index([userId,direction,status])
+@@index([dueDate])
+}
+model Event {
+id String @id @default(cuid())
+userId String
+user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+title String
+start DateTime
+end DateTime
+areaId String?
+area Area? @relation(fields:[areaId],references:[id],onDelete:SetNull)
+projectId String?
+project Project? @relation(fields:[projectId],references:[id],onDelete:SetNull)
+kind EventKind @default(OTHER)
+location String @default("")
+recurrenceWeekly Boolean @default(false)
+recurrenceWeekdays Int[] @default([])
+isSample Boolean @default(false)
+createdAt DateTime @default(now())
+@@index([userId,start])
+}
+model Note {
+id String @id @default(cuid())
+userId String
+user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+title String
+body String @default("")
+kind NoteKind @default(NOTE)
+url String?
+areaId String?
+area Area? @relation(fields:[areaId],references:[id],onDelete:SetNull)
+projectId String?
+project Project? @relation(fields:[projectId],references:[id],onDelete:SetNull)
+taskId String?
+task Task? @relation(fields:[taskId],references:[id],onDelete:SetNull)
+goalId String?
+goal Goal? @relation(fields:[goalId],references:[id],onDelete:SetNull)
+personId String?
+person Person? @relation(fields:[personId],references:[id],onDelete:SetNull)
+triagedAt DateTime?
+isSample Boolean @default(false)
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+@@index([userId,triagedAt])
+}
+model MoneyItem {
+id String @id @default(cuid())
+userId String
+user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+kind MoneyKind
+name String
+amountCents Int @default(0)
+cadence String @default("monthly")
+dueDay Int?
+nextDate DateTime?
+targetCents Int?
+savedCents Int?
+projectId String?
+project Project? @relation(fields:[projectId],references:[id],onDelete:SetNull)
+isSample Boolean @default(false)
+createdAt DateTime @default(now())
+@@index([userId,kind])
+}
+model Experiment {
+id String @id @default(cuid())
+userId String
+user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+projectId String?
+project Project? @relation(fields:[projectId],references:[id],onDelete:SetNull)
+hypothesis String
+budgetCents Int @default(0)
+deadline DateTime?
+successMeasure String @default("")
+result String @default("")
+status ExperimentStatus @default(PLANNED)
+isSample Boolean @default(false)
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+@@index([userId,status])
+}
+model WeeklyReview {
+id String @id @default(cuid())
+userId String
+user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+weekStart DateTime
+wentWell String @default("")
+didntGo String @default("")
+learned String @default("")
+nextWeekFocus String @default("")
+completedAt DateTime?
+isSample Boolean @default(false)
+createdAt DateTime @default(now())
+@@unique([userId,weekStart])
+}
+model Settings {
+id String @id @default(cuid())
+userId String @unique
+user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+timezone String @default("America/New_York")
+weekStartsOn Int @default(1)
+prioritizationMethod PrioritizationMethod @default(TOP3)
+dailyCapacityHours Float @default(6)
+weeklyAvailableHours Float @default(30)
+emailDigestEnabled Boolean @default(false)
+emailDigestTime String @default("07:00")
+setupAreasDone Boolean @default(false)
+setupClassesDone Boolean @default(false)
+setupJobDone Boolean @default(false)
+setupTimezoneDone Boolean @default(false)
+setupPrioritiesDone Boolean @default(false)
+setupRemindersDone Boolean @default(false)
+createdAt DateTime @default(now())
+updatedAt DateTime @updatedAt
+}
