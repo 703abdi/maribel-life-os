@@ -1,1 +1,13 @@
-export function canBootstrapAdmin(input:{emailMatches:boolean;passwordMatches:boolean;activeOwnerCount:number;existingUser:{active:boolean}|null}){return input.emailMatches&&input.passwordMatches&&input.activeOwnerCount===0&&input.existingUser===null;}
+export function canBootstrapAdmin(input: {
+  emailMatches: boolean;
+  passwordMatches: boolean;
+  activeOwnerCount: number;
+  existingUser: { active: boolean } | null;
+}) {
+  return (
+    input.emailMatches &&
+    input.passwordMatches &&
+    input.activeOwnerCount === 0 &&
+    input.existingUser === null
+  );
+}

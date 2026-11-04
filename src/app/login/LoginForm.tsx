@@ -1,2 +1,69 @@
-"use client";import {useState} from "react";import {useRouter,useSearchParams} from "next/navigation";
-export default function LoginForm(){const router=useRouter(),q=useSearchParams(),[error,setError]=useState(q.get("message")==="session-expired"?"Your session expired. Please sign in again.":"");const [busy,setBusy]=useState(false);async function submit(e:React.FormEvent<HTMLFormElement>){e.preventDefault();setBusy(true);setError("");const f=new FormData(e.currentTarget),r=await fetch("/api/auth/login",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({email:f.get("email"),password:f.get("password")})});const data=await r.json();if(!r.ok){setError(data.error||"Unable to sign in");setBusy(false);return;}router.push(q.get("from")||"/today");router.refresh();}return <form onSubmit={submit} className="space-y-4 rounded-xl border bg-white p-6 shadow-sm"><div><label className="text-sm font-medium">Email</label><input className="mt-1 w-full rounded-lg border p-2" name="email" type="email" required autoComplete="email"/></div><div><label className="text-sm font-medium">Password</label><input className="mt-1 w-full rounded-lg border p-2" name="password" type="password" required autoComplete="current-password"/></div>{error&&<p className="text-sm text-rose-700">{error}</p>}<button disabled={busy} className="w-full rounded-lg bg-indigo-600 py-2 font-semibold text-white">{busy?"Signing in…":"Sign in"}</button></form>}
+"use client";
+import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+export default function LoginForm() {
+  const router = useRouter(),
+    q = useSearchParams(),
+    [error, setError] = useState(
+      q.get("message") === "session-expired"
+        ? "Your session expired. Please sign in again."
+        : "",
+    );
+  const [busy, setBusy] = useState(false);
+  async function submit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setBusy(true);
+    setError("");
+    const f = new FormData(e.currentTarget),
+      r = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          email: f.get("email"),
+          password: f.get("password"),
+        }),
+      });
+    const data = await r.json();
+    if (!r.ok) {
+      setError(data.error || "Unable to sign in");
+      setBusy(false);
+      return;
+    }
+    router.push(q.get("from") || "/today");
+    router.refresh();
+  }
+  return (
+    <form
+      onSubmit={submit}
+      className="space-y-4 rounded-xl border bg-white p-6 shadow-sm"
+    >
+      <div>
+        <label className="text-sm font-medium">Email</label>
+        <input
+          className="mt-1 w-full rounded-lg border p-2"
+          name="email"
+          type="email"
+          required
+          autoComplete="email"
+        />
+      </div>
+      <div>
+        <label className="text-sm font-medium">Password</label>
+        <input
+          className="mt-1 w-full rounded-lg border p-2"
+          name="password"
+          type="password"
+          required
+          autoComplete="current-password"
+        />
+      </div>
+      {error && <p className="text-sm text-rose-700">{error}</p>}
+      <button
+        disabled={busy}
+        className="w-full rounded-lg bg-indigo-600 py-2 font-semibold text-white"
+      >
+        {busy ? "Signing in…" : "Sign in"}
+      </button>
+    </form>
+  );
+}

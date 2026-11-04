@@ -1,2 +1,18 @@
-import {NextRequest,NextResponse} from "next/server";import {clearSessionCookie,getSession,invalidateUserSessions} from "@/lib/auth";import {logoutRequestAllowed} from "@/lib/logout-csrf";
-export async function POST(req:NextRequest){if(!logoutRequestAllowed(req.headers))return NextResponse.json({error:"Invalid logout origin"},{status:403});const s=await getSession();if(s)await invalidateUserSessions(s.userId).catch(()=>{});await clearSessionCookie();return NextResponse.json({ok:true});}
+import { NextRequest, NextResponse } from "next/server";
+import {
+  clearSessionCookie,
+  getSession,
+  invalidateUserSessions,
+} from "@/lib/auth";
+import { logoutRequestAllowed } from "@/lib/logout-csrf";
+export async function POST(req: NextRequest) {
+  if (!logoutRequestAllowed(req.headers))
+    return NextResponse.json(
+      { error: "Invalid logout origin" },
+      { status: 403 },
+    );
+  const s = await getSession();
+  if (s) await invalidateUserSessions(s.userId).catch(() => {});
+  await clearSessionCookie();
+  return NextResponse.json({ ok: true });
+}

@@ -1,15 +1,7 @@
 # Maribel OS contributor guide
 
-Maribel OS is a single-owner personal life dashboard. Preserve its shared-record model: all screens query the same Areas, Goals, Projects, Tasks, Events, Notes, People, Commitments, Money Items, and Experiments. Do not add screen-specific duplicate records.
+Maribel OS is a single-owner personal life dashboard. All screens use the same shared Categories, Goals, Projects, Tasks, Calendar Events, Notes, People, Commitments, Money Items, and Experiments. Do not make screen-specific duplicate records.
 
-Use the dedicated Postgres schema `life`. Never commit environment files. Keep auth as one OWNER account with database-backed session invalidation, and keep Vercel cron use to the single daily job.
+Use the dedicated Postgres schema life. Never commit environment files. Keep one OWNER account, session-version invalidation, and the single daily Vercel cron.
 
-<!-- BEGIN:nextjs-agent-rules -->
-
-# This is NOT the Next.js you know
-
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
-
-This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
-
-<!-- END:nextjs-agent-rules -->
+This project uses a recent Next.js release. Read the relevant guide in node_modules/next/dist/docs before changing framework conventions.

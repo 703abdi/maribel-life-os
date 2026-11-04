@@ -5,7 +5,7 @@ CREATE SCHEMA IF NOT EXISTS "life";
 CREATE TYPE "UserRole" AS ENUM ('OWNER');
 
 -- CreateEnum
-CREATE TYPE "AreaKind" AS ENUM ('SCHOOL', 'GENERAL', 'JOB', 'PERSONAL', 'PEOPLE', 'BUSINESS', 'LEARNING');
+CREATE TYPE "CategoryKind" AS ENUM ('SCHOOL', 'GENERAL', 'JOB', 'PERSONAL', 'PEOPLE', 'BUSINESS', 'LEARNING');
 
 -- CreateEnum
 CREATE TYPE "GoalHorizon" AS ENUM ('SEASON', 'ONE_YEAR', 'FIVE_YEAR');
@@ -24,6 +24,9 @@ CREATE TYPE "TaskStatus" AS ENUM ('INBOX', 'TODO', 'DOING', 'WAITING', 'DONE', '
 
 -- CreateEnum
 CREATE TYPE "TaskKind" AS ENUM ('TASK', 'ASSIGNMENT', 'EXAM', 'STUDY', 'SHIFT_DELIVERABLE', 'FOLLOW_UP', 'APPOINTMENT', 'PAPERWORK', 'PRACTICE');
+
+-- CreateEnum
+CREATE TYPE "Effort" AS ENUM ('LOW', 'MEDIUM', 'HIGH');
 
 -- CreateEnum
 CREATE TYPE "RecurrenceRule" AS ENUM ('NONE', 'DAILY', 'WEEKLY', 'MONTHLY', 'EVERY_N_DAYS');
@@ -77,19 +80,19 @@ CREATE TABLE "LoginRateLimit" (
 );
 
 -- CreateTable
-CREATE TABLE "Area" (
+CREATE TABLE "Category" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
-    "kind" "AreaKind" NOT NULL DEFAULT 'GENERAL',
-    "color" TEXT NOT NULL DEFAULT '#4f46e5',
+    "kind" "CategoryKind" NOT NULL DEFAULT 'GENERAL',
+    "color" TEXT NOT NULL DEFAULT '#8b5cf6',
     "icon" TEXT NOT NULL DEFAULT 'circle',
     "sortOrder" INTEGER NOT NULL DEFAULT 0,
     "archived" BOOLEAN NOT NULL DEFAULT false,
     "isSample" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "Area_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "Category_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -100,7 +103,7 @@ CREATE TABLE "Goal" (
     "description" TEXT NOT NULL DEFAULT '',
     "horizon" "GoalHorizon" NOT NULL,
     "seasonLabel" TEXT,
-    "areaId" TEXT,
+    "categoryId" TEXT,
     "parentGoalId" TEXT,
     "status" "GoalStatus" NOT NULL DEFAULT 'ACTIVE',
     "targetDate" TIMESTAMP(3),
@@ -116,7 +119,7 @@ CREATE TABLE "Project" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "title" TEXT NOT NULL,
-    "areaId" TEXT NOT NULL,
+    "categoryId" TEXT NOT NULL,
     "goalId" TEXT,
     "kind" "ProjectKind" NOT NULL DEFAULT 'GENERAL',
     "status" "ProjectStatus" NOT NULL DEFAULT 'ACTIVE',
@@ -160,19 +163,23 @@ CREATE TABLE "Task" (
     "userId" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "notes" TEXT NOT NULL DEFAULT '',
-    "areaId" TEXT,
+    "categoryId" TEXT,
     "projectId" TEXT,
     "parentTaskId" TEXT,
     "status" "TaskStatus" NOT NULL DEFAULT 'INBOX',
+    "effort" "Effort" NOT NULL DEFAULT 'MEDIUM',
     "priority" INTEGER NOT NULL DEFAULT 2,
+    "position" DOUBLE PRECISION NOT NULL DEFAULT 0,
     "dueDate" TIMESTAMP(3),
     "plannedDate" TIMESTAMP(3),
-    "estimateMin" INTEGER NOT NULL DEFAULT 30,
+    "estimateMinutes" INTEGER NOT NULL DEFAULT 30,
+    "pinnedToday" BOOLEAN NOT NULL DEFAULT false,
     "topPriorityOn" TIMESTAMP(3),
     "recurrence" "RecurrenceRule" NOT NULL DEFAULT 'NONE',
     "recurrenceEvery" INTEGER,
     "recurrenceWeekdays" INTEGER[] DEFAULT ARRAY[]::INTEGER[],
-    "waitingOn" TEXT NOT NULL DEFAULT '',
+    "waitingOnPersonId" TEXT,
+    "followUpDate" TIMESTAMP(3),
     "kind" "TaskKind" NOT NULL DEFAULT 'TASK',
     "completedAt" TIMESTAMP(3),
     "recurringFromId" TEXT,
@@ -181,6 +188,37 @@ CREATE TABLE "Task" (
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "Task_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "TaskStep" (
+    "id" TEXT NOT NULL,
+    "taskId" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "done" BOOLEAN NOT NULL DEFAULT false,
+    "position" DOUBLE PRECISION NOT NULL DEFAULT 0,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "doneAt" TIMESTAMP(3),
+
+    CONSTRAINT "TaskStep_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "TaskPerson" (
+    "taskId" TEXT NOT NULL,
+    "personId" TEXT NOT NULL,
+
+    CONSTRAINT "TaskPerson_pkey" PRIMARY KEY ("taskId","personId")
+);
+
+-- CreateTable
+CREATE TABLE "TaskDependency" (
+    "id" TEXT NOT NULL,
+    "blockerId" TEXT NOT NULL,
+    "blockedId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "TaskDependency_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -216,14 +254,16 @@ CREATE TABLE "Commitment" (
 );
 
 -- CreateTable
-CREATE TABLE "Event" (
+CREATE TABLE "CalendarEvent" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "start" TIMESTAMP(3) NOT NULL,
     "end" TIMESTAMP(3) NOT NULL,
-    "areaId" TEXT,
+    "categoryId" TEXT,
     "projectId" TEXT,
+    "taskId" TEXT,
+    "personId" TEXT,
     "kind" "EventKind" NOT NULL DEFAULT 'OTHER',
     "location" TEXT NOT NULL DEFAULT '',
     "recurrenceWeekly" BOOLEAN NOT NULL DEFAULT false,
@@ -231,7 +271,7 @@ CREATE TABLE "Event" (
     "isSample" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    CONSTRAINT "Event_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "CalendarEvent_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -242,7 +282,7 @@ CREATE TABLE "Note" (
     "body" TEXT NOT NULL DEFAULT '',
     "kind" "NoteKind" NOT NULL DEFAULT 'NOTE',
     "url" TEXT,
-    "areaId" TEXT,
+    "categoryId" TEXT,
     "projectId" TEXT,
     "taskId" TEXT,
     "goalId" TEXT,
@@ -281,6 +321,7 @@ CREATE TABLE "Experiment" (
     "projectId" TEXT,
     "hypothesis" TEXT NOT NULL,
     "budgetCents" INTEGER NOT NULL DEFAULT 0,
+    "startDate" TIMESTAMP(3),
     "deadline" TIMESTAMP(3),
     "successMeasure" TEXT NOT NULL DEFAULT '',
     "result" TEXT NOT NULL DEFAULT '',
@@ -317,8 +358,6 @@ CREATE TABLE "Settings" (
     "prioritizationMethod" "PrioritizationMethod" NOT NULL DEFAULT 'TOP3',
     "dailyCapacityHours" DOUBLE PRECISION NOT NULL DEFAULT 6,
     "weeklyAvailableHours" DOUBLE PRECISION NOT NULL DEFAULT 30,
-    "emailDigestEnabled" BOOLEAN NOT NULL DEFAULT false,
-    "emailDigestTime" TEXT NOT NULL DEFAULT '07:00',
     "setupAreasDone" BOOLEAN NOT NULL DEFAULT false,
     "setupClassesDone" BOOLEAN NOT NULL DEFAULT false,
     "setupJobDone" BOOLEAN NOT NULL DEFAULT false,
@@ -341,10 +380,10 @@ CREATE INDEX "LoginRateLimit_updatedAt_idx" ON "LoginRateLimit"("updatedAt");
 CREATE UNIQUE INDEX "LoginRateLimit_email_ip_key" ON "LoginRateLimit"("email", "ip");
 
 -- CreateIndex
-CREATE INDEX "Area_userId_sortOrder_idx" ON "Area"("userId", "sortOrder");
+CREATE INDEX "Category_userId_sortOrder_idx" ON "Category"("userId", "sortOrder");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Area_userId_name_key" ON "Area"("userId", "name");
+CREATE UNIQUE INDEX "Category_userId_name_key" ON "Category"("userId", "name");
 
 -- CreateIndex
 CREATE INDEX "Goal_userId_horizon_idx" ON "Goal"("userId", "horizon");
@@ -353,7 +392,7 @@ CREATE INDEX "Goal_userId_horizon_idx" ON "Goal"("userId", "horizon");
 CREATE INDEX "Project_userId_status_idx" ON "Project"("userId", "status");
 
 -- CreateIndex
-CREATE INDEX "Project_areaId_idx" ON "Project"("areaId");
+CREATE INDEX "Project_categoryId_idx" ON "Project"("categoryId");
 
 -- CreateIndex
 CREATE INDEX "Milestone_projectId_dueDate_idx" ON "Milestone"("projectId", "dueDate");
@@ -371,6 +410,12 @@ CREATE INDEX "Task_plannedDate_idx" ON "Task"("plannedDate");
 CREATE INDEX "Task_projectId_idx" ON "Task"("projectId");
 
 -- CreateIndex
+CREATE INDEX "TaskStep_taskId_position_idx" ON "TaskStep"("taskId", "position");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "TaskDependency_blockerId_blockedId_key" ON "TaskDependency"("blockerId", "blockedId");
+
+-- CreateIndex
 CREATE INDEX "Person_userId_name_idx" ON "Person"("userId", "name");
 
 -- CreateIndex
@@ -380,7 +425,7 @@ CREATE INDEX "Commitment_userId_direction_status_idx" ON "Commitment"("userId", 
 CREATE INDEX "Commitment_dueDate_idx" ON "Commitment"("dueDate");
 
 -- CreateIndex
-CREATE INDEX "Event_userId_start_idx" ON "Event"("userId", "start");
+CREATE INDEX "CalendarEvent_userId_start_idx" ON "CalendarEvent"("userId", "start");
 
 -- CreateIndex
 CREATE INDEX "Note_userId_triagedAt_idx" ON "Note"("userId", "triagedAt");
@@ -398,13 +443,13 @@ CREATE UNIQUE INDEX "WeeklyReview_userId_weekStart_key" ON "WeeklyReview"("userI
 CREATE UNIQUE INDEX "Settings_userId_key" ON "Settings"("userId");
 
 -- AddForeignKey
-ALTER TABLE "Area" ADD CONSTRAINT "Area_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Category" ADD CONSTRAINT "Category_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Goal" ADD CONSTRAINT "Goal_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Goal" ADD CONSTRAINT "Goal_areaId_fkey" FOREIGN KEY ("areaId") REFERENCES "Area"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Goal" ADD CONSTRAINT "Goal_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "Category"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Goal" ADD CONSTRAINT "Goal_parentGoalId_fkey" FOREIGN KEY ("parentGoalId") REFERENCES "Goal"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -413,7 +458,7 @@ ALTER TABLE "Goal" ADD CONSTRAINT "Goal_parentGoalId_fkey" FOREIGN KEY ("parentG
 ALTER TABLE "Project" ADD CONSTRAINT "Project_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Project" ADD CONSTRAINT "Project_areaId_fkey" FOREIGN KEY ("areaId") REFERENCES "Area"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Project" ADD CONSTRAINT "Project_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "Category"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Project" ADD CONSTRAINT "Project_goalId_fkey" FOREIGN KEY ("goalId") REFERENCES "Goal"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -425,13 +470,31 @@ ALTER TABLE "Milestone" ADD CONSTRAINT "Milestone_projectId_fkey" FOREIGN KEY ("
 ALTER TABLE "Task" ADD CONSTRAINT "Task_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Task" ADD CONSTRAINT "Task_areaId_fkey" FOREIGN KEY ("areaId") REFERENCES "Area"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Task" ADD CONSTRAINT "Task_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "Category"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Task" ADD CONSTRAINT "Task_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Task" ADD CONSTRAINT "Task_parentTaskId_fkey" FOREIGN KEY ("parentTaskId") REFERENCES "Task"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Task" ADD CONSTRAINT "Task_waitingOnPersonId_fkey" FOREIGN KEY ("waitingOnPersonId") REFERENCES "Person"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "TaskStep" ADD CONSTRAINT "TaskStep_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "Task"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "TaskPerson" ADD CONSTRAINT "TaskPerson_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "Task"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "TaskPerson" ADD CONSTRAINT "TaskPerson_personId_fkey" FOREIGN KEY ("personId") REFERENCES "Person"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "TaskDependency" ADD CONSTRAINT "TaskDependency_blockerId_fkey" FOREIGN KEY ("blockerId") REFERENCES "Task"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "TaskDependency" ADD CONSTRAINT "TaskDependency_blockedId_fkey" FOREIGN KEY ("blockedId") REFERENCES "Task"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Person" ADD CONSTRAINT "Person_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -449,19 +512,25 @@ ALTER TABLE "Commitment" ADD CONSTRAINT "Commitment_projectId_fkey" FOREIGN KEY 
 ALTER TABLE "Commitment" ADD CONSTRAINT "Commitment_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "Task"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Event" ADD CONSTRAINT "Event_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "CalendarEvent" ADD CONSTRAINT "CalendarEvent_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Event" ADD CONSTRAINT "Event_areaId_fkey" FOREIGN KEY ("areaId") REFERENCES "Area"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "CalendarEvent" ADD CONSTRAINT "CalendarEvent_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "Category"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Event" ADD CONSTRAINT "Event_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "CalendarEvent" ADD CONSTRAINT "CalendarEvent_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "CalendarEvent" ADD CONSTRAINT "CalendarEvent_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "Task"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "CalendarEvent" ADD CONSTRAINT "CalendarEvent_personId_fkey" FOREIGN KEY ("personId") REFERENCES "Person"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Note" ADD CONSTRAINT "Note_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Note" ADD CONSTRAINT "Note_areaId_fkey" FOREIGN KEY ("areaId") REFERENCES "Area"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Note" ADD CONSTRAINT "Note_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "Category"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Note" ADD CONSTRAINT "Note_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "Project"("id") ON DELETE SET NULL ON UPDATE CASCADE;

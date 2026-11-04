@@ -1,3 +1,66 @@
-import Link from "next/link";import {requireUser} from "@/lib/auth";import {prisma} from "@/lib/prisma";import {Card,Empty,Page,PageHeader} from "@/components/ui";
-const horizons=[['SEASON','This Season'],['ONE_YEAR','1-Year'],['FIVE_YEAR','My Direction · 5-Year']] as const;
-export default async function Goals(){const u=await requireUser(),goals=await prisma.goal.findMany({where:{userId:u.id},include:{projects:{include:{tasks:true}}},orderBy:{createdAt:"asc"}});return <Page><PageHeader title="Goals" sub="Direction across this season, one year, and five years."/><div className="grid gap-4 lg:grid-cols-3">{horizons.map(([h,label])=><Card key={h} title={label}>{goals.filter(g=>g.horizon===h).length?goals.filter(g=>g.horizon===h).map(g=>{const all=g.projects.flatMap(p=>p.tasks),done=all.filter(t=>t.status==="DONE").length;return <div className="border-b py-3 last:border-0" key={g.id}><p className="font-medium text-sm">{g.title}</p>{g.seasonLabel&&<p className="text-xs text-slate-500">{g.seasonLabel}</p>}<p className="mt-1 text-xs text-slate-600">{g.successDefinition}</p><p className="mt-2 text-xs">{done}/{all.length} linked tasks done</p>{g.projects.map(p=><Link className="mr-2 text-xs text-indigo-700" href={`/projects/${p.id}`} key={p.id}>{p.title}</Link>)}</div>}):<Empty>No goals in this horizon.</Empty>}</Card>)}</div></Page>}
+import Link from "next/link";
+import { requireUser } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { Card, Empty, Page, PageHeader } from "@/components/ui";
+const horizons = [
+  ["SEASON", "This Season"],
+  ["ONE_YEAR", "1-Year"],
+  ["FIVE_YEAR", "My Direction · 5-Year"],
+] as const;
+export default async function Goals() {
+  const u = await requireUser(),
+    goals = await prisma.goal.findMany({
+      where: { userId: u.id },
+      include: { projects: { include: { tasks: true } } },
+      orderBy: { createdAt: "asc" },
+    });
+  return (
+    <Page>
+      <PageHeader
+        title="Goals"
+        sub="Direction across this season, one year, and five years."
+      />
+      <div className="grid gap-4 lg:grid-cols-3">
+        {horizons.map(([h, label]) => (
+          <Card key={h} title={label}>
+            {goals.filter((g) => g.horizon === h).length ? (
+              goals
+                .filter((g) => g.horizon === h)
+                .map((g) => {
+                  const all = g.projects.flatMap((p) => p.tasks),
+                    done = all.filter((t) => t.status === "DONE").length;
+                  return (
+                    <div className="border-b py-3 last:border-0" key={g.id}>
+                      <p className="font-medium text-sm">{g.title}</p>
+                      {g.seasonLabel && (
+                        <p className="text-xs text-slate-500">
+                          {g.seasonLabel}
+                        </p>
+                      )}
+                      <p className="mt-1 text-xs text-slate-600">
+                        {g.successDefinition}
+                      </p>
+                      <p className="mt-2 text-xs">
+                        {done}/{all.length} linked tasks done
+                      </p>
+                      {g.projects.map((p) => (
+                        <Link
+                          className="mr-2 text-xs text-indigo-700"
+                          href={`/projects/${p.id}`}
+                          key={p.id}
+                        >
+                          {p.title}
+                        </Link>
+                      ))}
+                    </div>
+                  );
+                })
+            ) : (
+              <Empty>No goals in this horizon.</Empty>
+            )}
+          </Card>
+        ))}
+      </div>
+    </Page>
+  );
+}

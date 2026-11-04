@@ -1,4 +1,35 @@
 // Migrate through a direct connection: Supabase transaction poolers cannot hold Prisma's migration lock.
-import {spawnSync} from "node:child_process";
-const env=process.env;const pooled=env.DATABASE_URL||env.POSTGRES_PRISMA_URL||env.POSTGRES_URL||"";const direct=env.DIRECT_URL||env.POSTGRES_URL_NON_POOLING||env.DATABASE_URL_UNPOOLED||pooled.replace(/(@[^/?#]*?)-pooler\./,"$1.");
-if(!direct){console.error("No database URL found. Set DATABASE_URL and DIRECT_URL for migrations.");process.exit(1);}const withSchema=(url)=>{try{const u=new URL(url);if(!u.searchParams.has("schema"))u.searchParams.set("schema","life");return u.toString();}catch{return url;}};const result=spawnSync("prisma",["migrate","deploy"],{stdio:"inherit",shell:process.platform==="win32",env:{...env,DATABASE_URL:withSchema(direct),PRISMA_SCHEMA_DISABLE_ADVISORY_LOCK:"1"}});process.exit(result.status??1);
+import { spawnSync } from "node:child_process";
+const env = process.env;
+const pooled =
+  env.DATABASE_URL || env.POSTGRES_PRISMA_URL || env.POSTGRES_URL || "";
+const direct =
+  env.DIRECT_URL ||
+  env.POSTGRES_URL_NON_POOLING ||
+  env.DATABASE_URL_UNPOOLED ||
+  pooled.replace(/(@[^/?#]*?)-pooler\./, "$1.");
+if (!direct) {
+  console.error(
+    "No database URL found. Set DATABASE_URL and DIRECT_URL for migrations.",
+  );
+  process.exit(1);
+}
+const withSchema = (url) => {
+  try {
+    const u = new URL(url);
+    if (!u.searchParams.has("schema")) u.searchParams.set("schema", "life");
+    return u.toString();
+  } catch {
+    return url;
+  }
+};
+const result = spawnSync("prisma", ["migrate", "deploy"], {
+  stdio: "inherit",
+  shell: process.platform === "win32",
+  env: {
+    ...env,
+    DATABASE_URL: withSchema(direct),
+    PRISMA_SCHEMA_DISABLE_ADVISORY_LOCK: "1",
+  },
+});
+process.exit(result.status ?? 1);

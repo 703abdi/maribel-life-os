@@ -14,7 +14,9 @@
     "db:deploy": "node scripts/migrate-deploy.mjs",
     "db:seed": "tsx prisma/seed.ts",
     "db:studio": "node scripts/prisma.mjs studio",
-    "test": "tsx scripts/life-test.mts && tsx scripts/auth-test.mts"
+    "test": "vitest run",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -26,7 +28,6 @@
     "date-fns": "^4.4.0",
     "jose": "^6.2.15",
     "next": "^16.4.1",
-    "nodemailer": "^10.3.1",
     "prisma": "^6.19.3",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
@@ -36,14 +37,20 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.4",
     "@types/node": "^20.19.43",
-    "@types/nodemailer": "^8.0.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.4.1",
+    "prettier": "^3.6.2",
     "tailwindcss": "^4.3.4",
     "tsx": "^4.23.15",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
   },
-  "allowScripts": { "@prisma/engines@6.19.3": true, "esbuild@0.28.2": true, "prisma@6.19.3": true, "@prisma/client@6.19.3": true }
+  "allowScripts": {
+    "@prisma/engines@6.19.3": true,
+    "esbuild@0.28.2": true,
+    "prisma@6.19.3": true,
+    "@prisma/client@6.19.3": true
+  }
 }

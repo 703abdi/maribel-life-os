@@ -1,5 +1,36 @@
-import {NextRequest,NextResponse} from "next/server";import {jwtVerify} from "jose";import {SESSION_COOKIE_NAME} from "@/lib/auth";
-function publicPath(p:string){return p==="/login"||p.startsWith("/api/auth/")||p==="/robots.txt"||p==="/api/cron/daily";}
-async function valid(t:string|undefined){const secret=process.env.AUTH_SECRET;if(!t||!secret)return false;try{const {payload}=await jwtVerify(t,new TextEncoder().encode(secret));return payload.role==="OWNER";}catch{return false;}}
-export async function proxy(req:NextRequest){if(publicPath(req.nextUrl.pathname))return NextResponse.next();if(await valid(req.cookies.get(SESSION_COOKIE_NAME)?.value))return NextResponse.next();if(req.nextUrl.pathname.startsWith("/api/"))return NextResponse.json({error:"Unauthorized"},{status:401});const url=new URL("/login",req.url);url.searchParams.set("from",req.nextUrl.pathname);return NextResponse.redirect(url);}
-export const config={matcher:["/((?!_next/static|_next/image|favicon.ico|icon.svg|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)"]};
+import { NextRequest, NextResponse } from "next/server";
+import { jwtVerify } from "jose";
+import { SESSION_COOKIE_NAME } from "@/lib/auth";
+function publicPath(p: string) {
+  return (
+    p === "/login" ||
+    p.startsWith("/api/auth/") ||
+    p === "/robots.txt" ||
+    p === "/api/cron/daily"
+  );
+}
+async function valid(t: string | undefined) {
+  const secret = process.env.AUTH_SECRET;
+  if (!t || !secret) return false;
+  try {
+    const { payload } = await jwtVerify(t, new TextEncoder().encode(secret));
+    return payload.role === "OWNER";
+  } catch {
+    return false;
+  }
+}
+export async function proxy(req: NextRequest) {
+  if (publicPath(req.nextUrl.pathname)) return NextResponse.next();
+  if (await valid(req.cookies.get(SESSION_COOKIE_NAME)?.value))
+    return NextResponse.next();
+  if (req.nextUrl.pathname.startsWith("/api/"))
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const url = new URL("/login", req.url);
+  url.searchParams.set("from", req.nextUrl.pathname);
+  return NextResponse.redirect(url);
+}
+export const config = {
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|icon.svg|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+  ],
+};

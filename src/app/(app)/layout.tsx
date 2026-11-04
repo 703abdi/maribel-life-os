@@ -1,2 +1,19 @@
-import {requireUser} from "@/lib/auth";import {prisma} from "@/lib/prisma";import NavShell from "@/components/NavShell";export const dynamic="force-dynamic";
-export default async function Layout({children}:{children:React.ReactNode}){const u=await requireUser();const samples=await prisma.task.count({where:{userId:u.id,isSample:true}});return <NavShell email={u.email} sampleData={samples>0}>{children}</NavShell>}
+import { requireUser } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import NavShell from "@/components/NavShell";
+export const dynamic = "force-dynamic";
+export default async function Layout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const u = await requireUser();
+  const samples = await prisma.task.count({
+    where: { userId: u.id, isSample: true },
+  });
+  return (
+    <NavShell email={u.email} sampleData={samples > 0}>
+      {children}
+    </NavShell>
+  );
+}

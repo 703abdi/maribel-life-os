@@ -1,2 +1,65 @@
-import {requireUser} from "@/lib/auth";import {prisma} from "@/lib/prisma";import {Card,Empty,Page,PageHeader} from "@/components/ui";
-export default async function Job(){const u=await requireUser();const [events,tasks,notes]=await Promise.all([prisma.event.findMany({where:{userId:u.id,kind:"SHIFT"},orderBy:{start:"asc"},take:12}),prisma.task.findMany({where:{userId:u.id,kind:{in:["SHIFT_DELIVERABLE","FOLLOW_UP"]}},orderBy:{dueDate:"asc"}}),prisma.note.findMany({where:{userId:u.id,kind:"MEETING"},orderBy:{createdAt:"desc"},take:10})]);return <Page><PageHeader title="Job" sub="Shifts, deliverables, follow-ups, meetings, and accomplishments."/><div className="grid gap-4 md:grid-cols-3"><Card title="Shifts">{events.length?events.map(e=><p className="border-b py-2 text-sm" key={e.id}>{e.title} · {e.start.toLocaleString()}</p>):<Empty>No shifts.</Empty>}</Card><Card title="Deliverables & follow-ups">{tasks.length?tasks.map(t=><p className="border-b py-2 text-sm" key={t.id}>{t.title}</p>):<Empty>No work tasks.</Empty>}</Card><Card title="Meeting notes & accomplishments">{notes.length?notes.map(n=><p className="border-b py-2 text-sm" key={n.id}>{n.title}</p>):<Empty>No log entries.</Empty>}</Card></div></Page>}
+import { requireUser } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { Card, Empty, Page, PageHeader } from "@/components/ui";
+export default async function Job() {
+  const u = await requireUser();
+  const [events, tasks, notes] = await Promise.all([
+    prisma.calendarEvent.findMany({
+      where: { userId: u.id, kind: "SHIFT" },
+      orderBy: { start: "asc" },
+      take: 12,
+    }),
+    prisma.task.findMany({
+      where: { userId: u.id, kind: { in: ["SHIFT_DELIVERABLE", "FOLLOW_UP"] } },
+      orderBy: { dueDate: "asc" },
+    }),
+    prisma.note.findMany({
+      where: { userId: u.id, kind: "MEETING" },
+      orderBy: { createdAt: "desc" },
+      take: 10,
+    }),
+  ]);
+  return (
+    <Page>
+      <PageHeader
+        title="Job"
+        sub="Shifts, deliverables, follow-ups, meetings, and accomplishments."
+      />
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card title="Shifts">
+          {events.length ? (
+            events.map((e) => (
+              <p className="border-b py-2 text-sm" key={e.id}>
+                {e.title} · {e.start.toLocaleString()}
+              </p>
+            ))
+          ) : (
+            <Empty>No shifts.</Empty>
+          )}
+        </Card>
+        <Card title="Deliverables & follow-ups">
+          {tasks.length ? (
+            tasks.map((t) => (
+              <p className="border-b py-2 text-sm" key={t.id}>
+                {t.title}
+              </p>
+            ))
+          ) : (
+            <Empty>No work tasks.</Empty>
+          )}
+        </Card>
+        <Card title="Meeting notes & accomplishments">
+          {notes.length ? (
+            notes.map((n) => (
+              <p className="border-b py-2 text-sm" key={n.id}>
+                {n.title}
+              </p>
+            ))
+          ) : (
+            <Empty>No log entries.</Empty>
+          )}
+        </Card>
+      </div>
+    </Page>
+  );
+}

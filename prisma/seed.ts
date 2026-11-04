@@ -1,4 +1,473 @@
-import {PrismaClient} from "@prisma/client";import bcrypt from "bcryptjs";
-const prisma=new PrismaClient();const day=86_400_000;const now=new Date();const at=(n:number,h=12)=>new Date(Date.now()+n*day+h*3600_000);
-async function main(){const email=(process.env.ADMIN_EMAIL||"maribel@example.com").toLowerCase();const user=await prisma.user.upsert({where:{email},update:{},create:{email,name:"Maribel",passwordHash:await bcrypt.hash(process.env.ADMIN_PASSWORD||"change-this-password",12),role:"OWNER"}});const defaults=[['School','SCHOOL','#4f46e5'],['Tasks / General','GENERAL','#64748b'],['Job','JOB','#0f766e'],['Personal','PERSONAL','#db2777'],['People & Commitments','PEOPLE','#d97706'],['Business','BUSINESS','#7c3aed'],['Learning','LEARNING','#2563eb']] as const;const areas:Record<string,string>={};for(const [i,[name,kind,color]] of defaults.entries())areas[name]=(await prisma.area.upsert({where:{userId_name:{userId:user.id,name}},update:{kind,color,sortOrder:i},create:{userId:user.id,name,kind,color,sortOrder:i}})).id;await prisma.settings.upsert({where:{userId:user.id},update:{},create:{userId:user.id}});const existing=await prisma.task.count({where:{userId:user.id,isSample:true}});if(existing)return;const season=await prisma.goal.create({data:{userId:user.id,title:"Sample: Finish Spring strong",horizon:"SEASON",seasonLabel:"Spring 2027",successDefinition:"Complete classes with a calm, sustainable plan.",areaId:areas.School,isSample:true}});const year=await prisma.goal.create({data:{userId:user.id,title:"Sample: Build a confident year",horizon:"ONE_YEAR",successDefinition:"Grow skills, savings, and community.",isSample:true}});await prisma.goal.create({data:{userId:user.id,title:"Sample: My Direction",horizon:"FIVE_YEAR",successDefinition:"A life with meaningful work, learning, and strong relationships.",isSample:true}});const bio=await prisma.project.create({data:{userId:user.id,title:"Sample: Biology 101",areaId:areas.School,goalId:season.id,kind:"CLASS",courseCode:"BIO 101",instructor:"Dr. Rivera",scheduleText:"Tue / Thu 10:00 AM",term:"Spring 2027",outcome:"Pass Biology with a strong foundation.",isSample:true}});const writing=await prisma.project.create({data:{userId:user.id,title:"Sample: College Writing",areaId:areas.School,goalId:season.id,kind:"CLASS",courseCode:"ENG 102",instructor:"Prof. Lee",scheduleText:"Mon / Wed 1:00 PM",term:"Spring 2027",isSample:true}});const job=await prisma.project.create({data:{userId:user.id,title:"Sample: Campus café job",areaId:areas.Job,kind:"JOB",outcome:"Be reliable and learn the operation.",isSample:true}});const business=await prisma.project.create({data:{userId:user.id,title:"Sample: Weekend tutoring idea",areaId:areas.Business,goalId:year.id,kind:"BUSINESS",outcome:"Validate whether a focused tutoring offer is useful.",successDefinition:"Three paid sessions and a repeatable offer.",financialTarget:50000,isSample:true}});const learning=await prisma.project.create({data:{userId:user.id,title:"Sample: Conversational Spanish",areaId:areas.Learning,goalId:year.id,kind:"LEARNING",outcome:"Hold a 15-minute conversation.",isSample:true}});await prisma.project.create({data:{userId:user.id,title:"Sample: Someday photo journal",areaId:areas.Personal,status:"SOMEDAY",kind:"PERSONAL",valueScore:4,effortScore:2,costScore:1,interestScore:5,timingScore:3,isSample:true}});await prisma.project.create({data:{userId:user.id,title:"Sample: Organize old photos",areaId:areas.Personal,kind:"PERSONAL",outcome:"A good example of an active project that needs a next step.",isSample:true}});await prisma.milestone.createMany({data:[{projectId:business.id,title:"Sample: Talk to five potential students",dueDate:at(10),isSample:true},{projectId:business.id,title:"Sample: Run first session",dueDate:at(18),isSample:true}]});await prisma.task.createMany({data:[{userId:user.id,title:"Sample: Read chapter 4",projectId:bio.id,areaId:areas.School,kind:"ASSIGNMENT",dueDate:at(2),plannedDate:at(1),estimateMin:60,status:"TODO",isSample:true},{userId:user.id,title:"Sample: Biology midterm",projectId:bio.id,areaId:areas.School,kind:"EXAM",dueDate:at(9),estimateMin:120,status:"TODO",isSample:true},{userId:user.id,title:"Sample: Review flashcards",projectId:bio.id,areaId:areas.School,kind:"STUDY",plannedDate:at(0),estimateMin:30,status:"TODO",isSample:true},{userId:user.id,title:"Sample: Draft writing outline",projectId:writing.id,areaId:areas.School,kind:"ASSIGNMENT",dueDate:at(4),estimateMin:45,status:"TODO",isSample:true},{userId:user.id,title:"Sample: Close café inventory",projectId:job.id,areaId:areas.Job,kind:"SHIFT_DELIVERABLE",dueDate:at(1),estimateMin:25,status:"TODO",isSample:true},{userId:user.id,title:"Sample: Call landlord",areaId:areas.Personal,kind:"PAPERWORK",dueDate:at(-2),estimateMin:20,status:"TODO",isSample:true},{userId:user.id,title:"Sample: Plan Sunday",areaId:areas.Personal,plannedDate:at(0),recurrence:"WEEKLY",recurrenceWeekdays:[0],estimateMin:20,status:"TODO",isSample:true},{userId:user.id,title:"Sample: Research tutoring demand",projectId:business.id,areaId:areas.Business,estimateMin:45,status:"TODO",isSample:true},{userId:user.id,title:"Sample: Practice Spanish dialogue",projectId:learning.id,areaId:areas.Learning,kind:"PRACTICE",plannedDate:at(1),estimateMin:30,status:"TODO",isSample:true},{userId:user.id,title:"Sample: Sort class handouts",areaId:areas.School,status:"INBOX",isSample:true}]});await prisma.event.createMany({data:[{userId:user.id,title:"Sample: Biology lecture",projectId:bio.id,areaId:areas.School,kind:"CLASS",start:at(1,10),end:at(1,11),recurrenceWeekly:true,recurrenceWeekdays:[2,4],isSample:true},{userId:user.id,title:"Sample: Café shift",projectId:job.id,areaId:areas.Job,kind:"SHIFT",start:at(2,16),end:at(2,21),isSample:true},{userId:user.id,title:"Sample: Dentist appointment",areaId:areas.Personal,kind:"APPOINTMENT",start:at(5,9),end:at(5,10),isSample:true},{userId:user.id,title:"Sample: Study block",projectId:bio.id,areaId:areas.School,kind:"STUDY_BLOCK",start:at(0,18),end:at(0,19),isSample:true}]});const friend=await prisma.person.create({data:{userId:user.id,name:"Sample: Maya",relationship:"Friend",contact:"maya@example.com",isSample:true}});await prisma.commitment.createMany({data:[{userId:user.id,personId:friend.id,direction:"THEY_PROMISED",description:"Sample: Send the concert info",followUpDate:at(-1),isSample:true},{userId:user.id,personId:friend.id,direction:"I_PROMISED",description:"Sample: Return Maya's book",dueDate:at(3),isSample:true}]});await prisma.note.createMany({data:[{userId:user.id,title:"Sample: Biology study guide",kind:"RESOURCE",url:"https://example.com/study-guide",projectId:bio.id,areaId:areas.School,triagedAt:now,isSample:true},{userId:user.id,title:"Sample: Tutoring notes",body:"Ask students where they get stuck.",projectId:business.id,areaId:areas.Business,kind:"NOTE",triagedAt:now,isSample:true},{userId:user.id,title:"Sample: Try a morning walk",kind:"IDEA",isSample:true},{userId:user.id,title:"Sample: Save this article",url:"https://example.com",kind:"RESOURCE",isSample:true}]});await prisma.moneyItem.createMany({data:[{userId:user.id,kind:"INCOME",name:"Sample: Café paycheck",amountCents:65000,cadence:"biweekly",isSample:true},{userId:user.id,kind:"BILL",name:"Sample: Phone bill",amountCents:5500,cadence:"monthly",dueDay:12,isSample:true},{userId:user.id,kind:"SUBSCRIPTION",name:"Sample: Music",amountCents:1099,cadence:"monthly",isSample:true},{userId:user.id,kind:"SAVINGS_GOAL",name:"Sample: Emergency fund",amountCents:0,targetCents:100000,savedCents:25000,cadence:"once",isSample:true}]});await prisma.experiment.create({data:{userId:user.id,projectId:business.id,hypothesis:"Sample: Students will pay for a focused homework session.",budgetCents:3000,deadline:at(21),successMeasure:"Three paid bookings",status:"PLANNED",isSample:true}});}
-main().finally(()=>prisma.$disconnect());
+import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
+import { runtimeDatabaseUrl } from "../src/lib/database-url";
+
+const prisma = new PrismaClient(
+  runtimeDatabaseUrl() ? { datasourceUrl: runtimeDatabaseUrl() } : undefined,
+);
+const dayMs = 86_400_000;
+const now = new Date();
+const onDay = (offset: number, hour = 12) =>
+  new Date(Date.now() + offset * dayMs + hour * 3_600_000);
+
+async function main() {
+  const email = (
+    process.env.ADMIN_EMAIL || "maribel@example.com"
+  ).toLowerCase();
+  const user = await prisma.user.upsert({
+    where: { email },
+    update: {},
+    create: {
+      email,
+      name: "Maribel",
+      passwordHash: await bcrypt.hash(
+        process.env.ADMIN_PASSWORD || "change-this-password",
+        12,
+      ),
+    },
+  });
+
+  const defaults = [
+    ["School", "SCHOOL", "#8b5cf6"],
+    ["Tasks", "GENERAL", "#64748b"],
+    ["Job", "JOB", "#34d399"],
+    ["Personal", "PERSONAL", "#f472b6"],
+    ["People/Commitments", "PEOPLE", "#f59e0b"],
+    ["Business", "BUSINESS", "#a78bfa"],
+    ["Learning", "LEARNING", "#60a5fa"],
+  ] as const;
+  const categories: Record<string, string> = {};
+  for (const [sortOrder, [name, kind, color]] of defaults.entries()) {
+    const category = await prisma.category.upsert({
+      where: { userId_name: { userId: user.id, name } },
+      update: { kind, color, sortOrder },
+      create: { userId: user.id, name, kind, color, sortOrder },
+    });
+    categories[name] = category.id;
+  }
+  await prisma.settings.upsert({
+    where: { userId: user.id },
+    create: { userId: user.id },
+    update: {},
+  });
+  if (await prisma.task.count({ where: { userId: user.id, isSample: true } }))
+    return;
+
+  const season = await prisma.goal.create({
+    data: {
+      userId: user.id,
+      title: "Sample: Finish the term with confidence",
+      horizon: "SEASON",
+      seasonLabel: "This term",
+      categoryId: categories.School,
+      successDefinition: "Complete classes with a calm, sustainable plan.",
+      isSample: true,
+    },
+  });
+  const year = await prisma.goal.create({
+    data: {
+      userId: user.id,
+      title: "Sample: Build a steady year",
+      horizon: "ONE_YEAR",
+      successDefinition: "Grow skills, savings, and community.",
+      isSample: true,
+    },
+  });
+  await prisma.goal.create({
+    data: {
+      userId: user.id,
+      title: "Sample: A meaningful direction",
+      horizon: "FIVE_YEAR",
+      successDefinition:
+        "Create a life with learning, meaningful work, and strong relationships.",
+      isSample: true,
+    },
+  });
+
+  const biology = await prisma.project.create({
+    data: {
+      userId: user.id,
+      title: "Sample: Biology 101",
+      categoryId: categories.School,
+      goalId: season.id,
+      kind: "CLASS",
+      courseCode: "BIO 101",
+      instructor: "Sample Instructor",
+      scheduleText: "Tue / Thu 10:00 AM",
+      term: "Current term",
+      outcome: "Build a strong foundation in biology.",
+      isSample: true,
+    },
+  });
+  const writing = await prisma.project.create({
+    data: {
+      userId: user.id,
+      title: "Sample: College writing",
+      categoryId: categories.School,
+      goalId: season.id,
+      kind: "CLASS",
+      courseCode: "ENG 102",
+      instructor: "Sample Instructor",
+      scheduleText: "Mon / Wed 1:00 PM",
+      term: "Current term",
+      isSample: true,
+    },
+  });
+  const job = await prisma.project.create({
+    data: {
+      userId: user.id,
+      title: "Sample: Part-time job",
+      categoryId: categories.Job,
+      kind: "JOB",
+      outcome: "Be reliable and learn the operation.",
+      isSample: true,
+    },
+  });
+  const business = await prisma.project.create({
+    data: {
+      userId: user.id,
+      title: "Sample: Tutoring experiment",
+      categoryId: categories.Business,
+      goalId: year.id,
+      kind: "BUSINESS",
+      outcome: "Validate a useful focused tutoring offer.",
+      successDefinition: "Three paid sessions and a repeatable offer.",
+      financialTarget: 50000,
+      isSample: true,
+    },
+  });
+  const learning = await prisma.project.create({
+    data: {
+      userId: user.id,
+      title: "Sample: Conversational language practice",
+      categoryId: categories.Learning,
+      goalId: year.id,
+      kind: "LEARNING",
+      outcome: "Hold a 15-minute conversation.",
+      isSample: true,
+    },
+  });
+  await prisma.project.create({
+    data: {
+      userId: user.id,
+      title: "Sample: Photo journal idea",
+      categoryId: categories.Personal,
+      status: "SOMEDAY",
+      kind: "PERSONAL",
+      valueScore: 4,
+      effortScore: 2,
+      costScore: 1,
+      interestScore: 5,
+      timingScore: 3,
+      isSample: true,
+    },
+  });
+  await prisma.project.create({
+    data: {
+      userId: user.id,
+      title: "Sample: Organize old photos",
+      categoryId: categories.Personal,
+      kind: "PERSONAL",
+      outcome: "An active project intentionally missing a next step.",
+      isSample: true,
+    },
+  });
+
+  await prisma.milestone.createMany({
+    data: [
+      {
+        projectId: business.id,
+        title: "Sample: Talk to five potential students",
+        dueDate: onDay(10),
+        isSample: true,
+      },
+      {
+        projectId: business.id,
+        title: "Sample: Run a first session",
+        dueDate: onDay(18),
+        isSample: true,
+      },
+    ],
+  });
+  const read = await prisma.task.create({
+    data: {
+      userId: user.id,
+      title: "Sample: Read chapter four",
+      projectId: biology.id,
+      categoryId: categories.School,
+      kind: "ASSIGNMENT",
+      dueDate: onDay(2),
+      plannedDate: onDay(1),
+      estimateMinutes: 60,
+      status: "TODO",
+      isSample: true,
+    },
+  });
+  const cards = await prisma.task.create({
+    data: {
+      userId: user.id,
+      title: "Sample: Review flashcards",
+      projectId: biology.id,
+      categoryId: categories.School,
+      kind: "STUDY",
+      plannedDate: onDay(0),
+      estimateMinutes: 30,
+      status: "TODO",
+      isSample: true,
+    },
+  });
+  await prisma.task.createMany({
+    data: [
+      {
+        userId: user.id,
+        title: "Sample: Biology midterm",
+        projectId: biology.id,
+        categoryId: categories.School,
+        kind: "EXAM",
+        dueDate: onDay(9),
+        estimateMinutes: 120,
+        status: "TODO",
+        isSample: true,
+      },
+      {
+        userId: user.id,
+        title: "Sample: Draft writing outline",
+        projectId: writing.id,
+        categoryId: categories.School,
+        kind: "ASSIGNMENT",
+        dueDate: onDay(4),
+        estimateMinutes: 45,
+        status: "TODO",
+        isSample: true,
+      },
+      {
+        userId: user.id,
+        title: "Sample: Close inventory",
+        projectId: job.id,
+        categoryId: categories.Job,
+        kind: "SHIFT_DELIVERABLE",
+        dueDate: onDay(1),
+        estimateMinutes: 25,
+        status: "TODO",
+        isSample: true,
+      },
+      {
+        userId: user.id,
+        title: "Sample: Make a phone call",
+        categoryId: categories.Personal,
+        kind: "PAPERWORK",
+        dueDate: onDay(-2),
+        estimateMinutes: 20,
+        status: "TODO",
+        isSample: true,
+      },
+      {
+        userId: user.id,
+        title: "Sample: Plan Sunday",
+        categoryId: categories.Personal,
+        plannedDate: onDay(0),
+        recurrence: "WEEKLY",
+        recurrenceWeekdays: [0],
+        estimateMinutes: 20,
+        status: "TODO",
+        isSample: true,
+      },
+      {
+        userId: user.id,
+        title: "Sample: Research tutoring demand",
+        projectId: business.id,
+        categoryId: categories.Business,
+        estimateMinutes: 45,
+        status: "TODO",
+        isSample: true,
+      },
+      {
+        userId: user.id,
+        title: "Sample: Practice a dialogue",
+        projectId: learning.id,
+        categoryId: categories.Learning,
+        kind: "PRACTICE",
+        plannedDate: onDay(1),
+        estimateMinutes: 30,
+        status: "TODO",
+        isSample: true,
+      },
+      {
+        userId: user.id,
+        title: "Sample: Sort class handouts",
+        categoryId: categories.School,
+        status: "INBOX",
+        isSample: true,
+      },
+    ],
+  });
+  await prisma.taskStep.createMany({
+    data: [
+      {
+        taskId: read.id,
+        title: "Sample: Skim the chapter headings",
+        position: 1,
+      },
+      {
+        taskId: read.id,
+        title: "Sample: Answer review questions",
+        position: 2,
+      },
+    ],
+  });
+  await prisma.taskDependency.create({
+    data: { blockerId: read.id, blockedId: cards.id },
+  });
+
+  const contact = await prisma.person.create({
+    data: {
+      userId: user.id,
+      name: "Sample: Contact",
+      relationship: "Friend",
+      contact: "sample@example.com",
+      isSample: true,
+    },
+  });
+  await prisma.task.create({
+    data: {
+      userId: user.id,
+      title: "Sample: Wait for a reply",
+      categoryId: categories.People,
+      status: "WAITING",
+      waitingOnPersonId: contact.id,
+      followUpDate: onDay(2),
+      kind: "FOLLOW_UP",
+      isSample: true,
+    },
+  });
+  await prisma.calendarEvent.createMany({
+    data: [
+      {
+        userId: user.id,
+        title: "Sample: Biology lecture",
+        projectId: biology.id,
+        categoryId: categories.School,
+        kind: "CLASS",
+        start: onDay(1, 10),
+        end: onDay(1, 11),
+        recurrenceWeekly: true,
+        recurrenceWeekdays: [2, 4],
+        isSample: true,
+      },
+      {
+        userId: user.id,
+        title: "Sample: Work shift",
+        projectId: job.id,
+        categoryId: categories.Job,
+        kind: "SHIFT",
+        start: onDay(2, 16),
+        end: onDay(2, 21),
+        isSample: true,
+      },
+      {
+        userId: user.id,
+        title: "Sample: Appointment",
+        categoryId: categories.Personal,
+        kind: "APPOINTMENT",
+        start: onDay(5, 9),
+        end: onDay(5, 10),
+        isSample: true,
+      },
+    ],
+  });
+  await prisma.commitment.createMany({
+    data: [
+      {
+        userId: user.id,
+        personId: contact.id,
+        direction: "THEY_PROMISED",
+        description: "Sample: Send the event information",
+        followUpDate: onDay(-1),
+        isSample: true,
+      },
+      {
+        userId: user.id,
+        personId: contact.id,
+        direction: "I_PROMISED",
+        description: "Sample: Return a book",
+        dueDate: onDay(3),
+        isSample: true,
+      },
+    ],
+  });
+  await prisma.note.createMany({
+    data: [
+      {
+        userId: user.id,
+        title: "Sample: Biology study guide",
+        kind: "RESOURCE",
+        url: "https://example.com/study-guide",
+        projectId: biology.id,
+        categoryId: categories.School,
+        triagedAt: now,
+        isSample: true,
+      },
+      {
+        userId: user.id,
+        title: "Sample: Tutoring notes",
+        body: "Ask students where they get stuck.",
+        projectId: business.id,
+        categoryId: categories.Business,
+        kind: "NOTE",
+        triagedAt: now,
+        isSample: true,
+      },
+      {
+        userId: user.id,
+        title: "Sample: Try a morning walk",
+        kind: "IDEA",
+        isSample: true,
+      },
+    ],
+  });
+  await prisma.moneyItem.createMany({
+    data: [
+      {
+        userId: user.id,
+        kind: "INCOME",
+        name: "Sample: Paycheck",
+        amountCents: 65000,
+        cadence: "biweekly",
+        isSample: true,
+      },
+      {
+        userId: user.id,
+        kind: "BILL",
+        name: "Sample: Phone bill",
+        amountCents: 5500,
+        cadence: "monthly",
+        dueDay: 12,
+        isSample: true,
+      },
+      {
+        userId: user.id,
+        kind: "SAVINGS_GOAL",
+        name: "Sample: Emergency fund",
+        targetCents: 100000,
+        savedCents: 25000,
+        cadence: "once",
+        isSample: true,
+      },
+    ],
+  });
+  await prisma.experiment.create({
+    data: {
+      userId: user.id,
+      projectId: business.id,
+      hypothesis: "Sample: Students will pay for a focused homework session.",
+      budgetCents: 3000,
+      startDate: now,
+      deadline: onDay(21),
+      successMeasure: "Three paid bookings",
+      status: "PLANNED",
+      isSample: true,
+    },
+  });
+}
+
+main().finally(() => prisma.$disconnect());

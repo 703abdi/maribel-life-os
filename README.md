@@ -1,25 +1,38 @@
 # Maribel OS
 
-Maribel OS is a private, single-user dashboard for directing life: one shared set of tasks, projects, goals, events, commitments, notes, money items, and experiments viewed through Today, Week, School, Job, and focused planning screens.
+Maribel OS is a private, single-owner life dashboard for directing school, work, projects, people, commitments, and personal direction from one shared set of records.
 
-## Local development
+Tasks are created once and can appear in Today, Week, Inbox, Waiting On, a project, School, Job, Learning, and Calendar views. A task keeps its due date separate from its planned work date, along with an estimate, effort, steps, dependencies, and optional waiting/follow-up details.
 
-1. Copy `.env.example` to `.env` and fill in a local PostgreSQL `DATABASE_URL`, `AUTH_SECRET`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD`.
-2. Run `npm install`.
-3. Run `npm run db:deploy`, then optionally `npm run db:seed` for clearly labeled sample records.
-4. Run `npm run dev`, open `http://localhost:3000`, and sign in with the configured admin credentials. The first matching sign-in creates the owner account.
+## Local setup
 
-Useful checks: `npm run lint`, `npm run typecheck`, `npm test`, and `npm run build`.
+1. Install dependencies with npm install.
+2. Copy the variables in .env.example into your local environment. Do not commit an environment file.
+3. Create the dedicated life schema through npm run db:deploy.
+4. Seed an owner and clearly marked example records with npm run db:seed.
+5. Start the app with npm run dev, then sign in with ADMIN_EMAIL and ADMIN_PASSWORD.
 
-## Deploy: Vercel Hobby + Supabase Free
+The first successful login can bootstrap the sole owner only when both configured owner credentials match. Passwords are bcrypt-hashed. The life_session HTTP-only cookie contains a signed JWT and becomes invalid when the session version changes.
 
-1. Create a Supabase project and copy its connection strings. Use the pooled connection (port `6543`, with `pgbouncer=true`) as `DATABASE_URL`; use the direct connection (port `5432`) as `DIRECT_URL`.
-2. Import this repository into Vercel. Add the variables from `.env.example`: `DATABASE_URL`, `DIRECT_URL`, `AUTH_SECRET`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `APP_URL`, `APP_TIMEZONE`, and `CRON_SECRET`. Add `NOTIFY_TO`, `GMAIL_USER`, and `GMAIL_APP_PASSWORD` only if daily email digests are wanted.
-3. Use build command `npm run vercel-build`; it generates Prisma, deploys migrations through the direct URL, then builds Next.js. Run `npm run db:seed` locally or from a controlled one-off environment if you want the sample walkthrough.
-4. Sign in for the first time, then use the setup checklist in Settings to set areas, classes, job schedule, timezone/capacity, priorities, and reminders.
+## Supabase and Vercel Hobby deployment
 
-Vercel Hobby permits one daily cron here: `/api/cron/daily` at `0 11 * * *`. It generates any due recurring task instances and can email a digest. Hobby is intended for non-commercial personal use, which fits this private dashboard.
+Create a Supabase project, then set a pooled connection URL as DATABASE_URL and a direct database URL as DIRECT_URL. Both should target the life schema. The runtime URL helper adds schema=life and enables the transaction-pooler parameter for Supabase port 6543; the seed uses this same helper.
 
-## Sample data
+In Vercel, set DATABASE_URL, DIRECT_URL, AUTH_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD, and CRON_SECRET. Deploy with the normal Vercel build command. The build runs Prisma generation, then deploys the migration over the direct connection. Vercel Hobby uses the one daily cron declared in vercel.json: /api/cron/daily at 11:00 UTC. Requests need an Authorization bearer token matching CRON_SECRET.
 
-The seed creates records prefixed `Sample:` and marks them `isSample=true`. Settings has a protected **Clear sample data** operation: type `CLEAR SAMPLE DATA` to delete only sample areas, projects, milestones, tasks, events, notes, people, commitments, money items, experiments, goals, and reviews. Real records and settings remain.
+## Sample data and first run
+
+The seed creates generic records prefixed Sample: and marks every one with isSample=true. In Settings, type CLEAR SAMPLE DATA to remove only those marked records. Your own records and settings are not removed.
+
+Finish the first-run checklist by setting categories, classes, job schedule, timezone/capacity, prioritization, and reminder habits. The dashboard then uses daily and weekly capacity settings to flag overloaded days.
+
+## Commands
+
+- npm run dev — development server
+- npm run build — generate Prisma client and create a production build
+- npm run lint — lint source
+- npm run typecheck — TypeScript checks
+- npm test — Vitest unit tests
+- npm run format / npm run format:check — Prettier formatting
+- npm run db:deploy — apply the fresh life migration
+- npm run db:seed — seed generic sample data

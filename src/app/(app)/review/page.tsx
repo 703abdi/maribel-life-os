@@ -1,2 +1,94 @@
-import {requireUser} from "@/lib/auth";import {prisma} from "@/lib/prisma";import {reviewData} from "@/modules/queries";import {createReview} from "@/modules/actions";import {Card,Empty,Page,PageHeader,btn,input} from "@/components/ui";
-export default async function Review(){const u=await requireUser(),[d,history]=await Promise.all([reviewData(u.id),prisma.weeklyReview.findMany({where:{userId:u.id},orderBy:{weekStart:"desc"},take:8})]);return <Page><PageHeader title="Weekly review" sub="Close loops, see what is ahead, and choose a focus."/><div className="grid gap-4 lg:grid-cols-2"><Card title="Review checklist"><p className="text-sm">Unfinished from last 7 days: <b>{d.unfinished.length}</b></p><p className="text-sm">Upcoming next 14 days: <b>{d.upcoming.length}</b></p><p className="text-sm">Stalled projects: <b>{d.stalled.length}</b></p><p className="text-sm">Commitments needing attention: <b>{d.commitments.length}</b></p><p className="text-sm">Inbox count: <b>{d.inbox}</b></p></Card><Card title="Reflection"><form action={createReview} className="space-y-3"><textarea className={input} name="wentWell" placeholder="What went well?"/><textarea className={input} name="didntGo" placeholder="What didn't go well?"/><textarea className={input} name="learned" placeholder="What did you learn?"/><input className={input} name="nextWeekFocus" placeholder="Next week's focus"/><button className={btn.primary}>Save weekly review</button></form></Card><Card title="Needs a decision" className="lg:col-span-2">{d.stalled.length?d.stalled.map(p=><p className="border-b py-2 text-sm" key={p.id}>{p.title} {p.noNextStep&&<span className="text-rose-700">· no next step</span>}</p>):<Empty>No stalled active projects.</Empty>}</Card><Card title="Review history" className="lg:col-span-2">{history.length?history.map(r=><p className="border-b py-2 text-sm" key={r.id}>{r.weekStart.toLocaleDateString()} · {r.nextWeekFocus||"No focus recorded"}</p>):<Empty>Your first saved review will appear here.</Empty>}</Card></div></Page>}
+import { requireUser } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { reviewData } from "@/modules/queries";
+import { createReview } from "@/modules/actions";
+import { Card, Empty, Page, PageHeader, btn, input } from "@/components/ui";
+export default async function Review() {
+  const u = await requireUser(),
+    [d, history] = await Promise.all([
+      reviewData(u.id),
+      prisma.weeklyReview.findMany({
+        where: { userId: u.id },
+        orderBy: { weekStart: "desc" },
+        take: 8,
+      }),
+    ]);
+  return (
+    <Page>
+      <PageHeader
+        title="Weekly review"
+        sub="Close loops, see what is ahead, and choose a focus."
+      />
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card title="Review checklist">
+          <p className="text-sm">
+            Unfinished from last 7 days: <b>{d.unfinished.length}</b>
+          </p>
+          <p className="text-sm">
+            Upcoming next 14 days: <b>{d.upcoming.length}</b>
+          </p>
+          <p className="text-sm">
+            Stalled projects: <b>{d.stalled.length}</b>
+          </p>
+          <p className="text-sm">
+            Commitments needing attention: <b>{d.commitments.length}</b>
+          </p>
+          <p className="text-sm">
+            Inbox count: <b>{d.inbox}</b>
+          </p>
+        </Card>
+        <Card title="Reflection">
+          <form action={createReview} className="space-y-3">
+            <textarea
+              className={input}
+              name="wentWell"
+              placeholder="What went well?"
+            />
+            <textarea
+              className={input}
+              name="didntGo"
+              placeholder="What didn't go well?"
+            />
+            <textarea
+              className={input}
+              name="learned"
+              placeholder="What did you learn?"
+            />
+            <input
+              className={input}
+              name="nextWeekFocus"
+              placeholder="Next week's focus"
+            />
+            <button className={btn.primary}>Save weekly review</button>
+          </form>
+        </Card>
+        <Card title="Needs a decision" className="lg:col-span-2">
+          {d.stalled.length ? (
+            d.stalled.map((p) => (
+              <p className="border-b py-2 text-sm" key={p.id}>
+                {p.title}{" "}
+                {p.noNextStep && (
+                  <span className="text-rose-700">· no next step</span>
+                )}
+              </p>
+            ))
+          ) : (
+            <Empty>No stalled active projects.</Empty>
+          )}
+        </Card>
+        <Card title="Review history" className="lg:col-span-2">
+          {history.length ? (
+            history.map((r) => (
+              <p className="border-b py-2 text-sm" key={r.id}>
+                {r.weekStart.toLocaleDateString()} ·{" "}
+                {r.nextWeekFocus || "No focus recorded"}
+              </p>
+            ))
+          ) : (
+            <Empty>Your first saved review will appear here.</Empty>
+          )}
+        </Card>
+      </div>
+    </Page>
+  );
+}

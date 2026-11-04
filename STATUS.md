@@ -1,16 +1,30 @@
-# Maribel OS status
+# Status
 
 ## Built
 
-- Shared Prisma record system in schema `life`: areas, horizons/goals, projects and milestones, tasks/subtasks with separate due and planned dates, people/commitments, events, notes/resources, money, experiments, reviews, and per-owner settings.
-- Today, Week, Inbox, Projects plus Not now comparison, Waiting On, generic Areas, specialized School and Job views, Goals, Weekly Review, Money, Experiments, Settings, Account, and responsive desktop/sidebar plus mobile bottom navigation.
-- Hardened owner auth: JWT `life_session`, session-version invalidation, bootstrap from configured admin credentials, database rate limits (5 email+IP / 20 email), trusted forwarding headers only on Vercel, same-origin POST logout, and password changes.
-- Daily protected cron for idempotent recurring task generation and optional Gmail/outbox digest; one Vercel Hobby cron only.
-- Seeded walkthrough sample data, clean initial migration, helper/unit coverage, docs, and clean `.env.example`.
+- Cookie-JWT owner authentication with bcrypt password hashes, session-version invalidation, login rate limiting, trusted Vercel forwarding headers only, and POST same-origin logout.
+- A fresh Prisma schema in the dedicated life schema, with Category, Task, TaskStep, TaskDependency, Person, CalendarEvent, Project, Goal, Note, Commitment, MoneyItem, Experiment, and WeeklyReview records.
+- Dark responsive NavShell with desktop navigation, mobile bottom navigation, a quick capture bar, and a keyboard command palette.
+- Today, Week, Inbox, Waiting On, Projects, School, Job, Learning, Goals/Direction, Weekly Review, Calendar, People, Settings, Money, and Experiments screens.
+- Separate due/planned task dates, estimates, effort, waiting person and follow-up dates, project milestones, task steps, and dependencies.
+- Capacity calculations, project next-step health, sample-only deletion guard, daily protected recurrence cron, migration helper, seed URL helper, and Vitest coverage for rate limits, dates/capacity, seed URL behavior, and the clear-sample guard.
 
-## Deferred / known limits
+## Sample data
 
-- No sharing or multi-user roles; this is intentionally one-owner.
-- No external calendar synchronization, file uploads, push notifications, or calendar drag-and-drop.
-- Events support weekly recurrence metadata; the current Week query displays stored events rather than expanding an unbounded recurrence series.
-- Forms focus on core capture and management. Full editing for every record type is deliberately compact and can be expanded after real-life usage identifies the needed fields.
+The seed intentionally uses generic, clearly prefixed Sample: records. It includes example school projects, work shifts, commitments, money items, and a small experiment. It is illustrative only and can be removed from Settings.
+
+## Known limits
+
+- Calendar currently presents the upcoming event list rather than drag-and-drop scheduling.
+- Projects show a representative task-detail panel; task editing remains form-driven.
+- People and calendar creation are currently seeded/database-backed surfaces rather than dedicated creation modals.
+
+## Based on a personal OS template
+
+### Carried over
+
+- Next.js App Router structure, Prisma patterns, Tailwind v4 styling approach, shared-record task architecture, dark navigation shell, quick capture, task detail patterns, command palette concept, calendar and people views, task steps/dependencies, and cookie JWT authentication.
+
+### Not carried over
+
+- Any external data ingestion, connector, uploader, automated suggestion, audio briefing, agent, 3D visual, analytics, or third-party personal context feature.
