@@ -11,7 +11,15 @@ export async function ensureSettings(userId: string) {
 export async function todayData(userId: string) {
   const today = startOfDay(),
     tomorrow = addDays(today, 1);
-  const [tasks, events, commitments, settings] = await Promise.all([
+  const [
+    tasks,
+    events,
+    commitments,
+    settings,
+    areaCount,
+    classCount,
+    jobScheduleCount,
+  ] = await Promise.all([
     prisma.task.findMany({
       where: { userId },
       include: { project: true, category: true, waitingOnPerson: true },
@@ -36,6 +44,9 @@ export async function todayData(userId: string) {
       orderBy: { dueDate: "asc" },
     }),
     ensureSettings(userId),
+    prisma.category.count({ where: { userId } }),
+    prisma.project.count({ where: { userId, kind: "CLASS" } }),
+    prisma.calendarEvent.count({ where: { userId, kind: "SHIFT" } }),
   ]);
   return {
     tasks,
@@ -43,6 +54,7 @@ export async function todayData(userId: string) {
     events,
     commitments,
     settings,
+    setupSignals: { areaCount, classCount, jobScheduleCount },
     today,
   };
 }
@@ -64,7 +76,7 @@ export async function weekData(userId: string) {
         ],
         status: { notIn: ["DONE", "CANCELED"] },
       },
-      include: { project: true },
+      include: { project: true, category: true },
     }),
     prisma.calendarEvent.findMany({
       where: { userId, start: { gte: start, lt: end } },

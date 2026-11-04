@@ -36,7 +36,9 @@ export default async function CalendarPage() {
                 {event.kind === "SHIFT" && <Badge tone="green">Shift</Badge>}
               </div>
               {event.location && (
-                <p className="mt-2 text-xs text-slate-500">{event.location}</p>
+                <p className="mt-2 text-xs text-[var(--muted)]">
+                  {event.location}
+                </p>
               )}
             </Card>
           ))

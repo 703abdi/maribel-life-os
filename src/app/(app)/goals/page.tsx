@@ -33,11 +33,11 @@ export default async function Goals() {
                     <div className="border-b py-3 last:border-0" key={g.id}>
                       <p className="font-medium text-sm">{g.title}</p>
                       {g.seasonLabel && (
-                        <p className="text-xs text-slate-500">
+                        <p className="text-xs text-[var(--muted)]">
                           {g.seasonLabel}
                         </p>
                       )}
-                      <p className="mt-1 text-xs text-slate-600">
+                      <p className="mt-1 text-xs text-[var(--muted)]">
                         {g.successDefinition}
                       </p>
                       <p className="mt-2 text-xs">
@@ -45,7 +45,7 @@ export default async function Goals() {
                       </p>
                       {g.projects.map((p) => (
                         <Link
-                          className="mr-2 text-xs text-indigo-700"
+                          className="mr-2 text-xs text-violet-200 hover:underline"
                           href={`/projects/${p.id}`}
                           key={p.id}
                         >

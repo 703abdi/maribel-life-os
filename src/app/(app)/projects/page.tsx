@@ -46,7 +46,7 @@ export default async function Projects({
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-slate-500">
+                <tr className="text-left text-[var(--muted)]">
                   <th>Idea</th>
                   <th>Value</th>
                   <th>Effort</th>
@@ -64,7 +64,7 @@ export default async function Projects({
                       <td className="py-2">
                         <Link
                           href={`/projects/${p.id}`}
-                          className="font-medium text-indigo-700"
+                          className="font-medium text-violet-200 hover:underline"
                         >
                           {p.title}
                         </Link>
@@ -139,21 +139,21 @@ export default async function Projects({
               <div className="flex justify-between gap-2">
                 <div>
                   <Link
-                    className="font-semibold text-indigo-700"
+                    className="font-semibold text-violet-200 hover:underline"
                     href={`/projects/${p.id}`}
                   >
                     {p.title}
                   </Link>
-                  <p className="mt-1 text-xs text-slate-500">
+                  <p className="mt-1 text-xs text-[var(--muted)]">
                     {p.category.name} · {p.kind}
                   </p>
                 </div>
                 {p.noNextStep && <Badge tone="red">No next step</Badge>}
               </div>
-              <p className="mt-3 text-sm text-slate-600">
+              <p className="mt-3 text-sm text-[var(--muted)]">
                 {p.outcome || "No outcome written yet."}
               </p>
-              <p className="mt-2 text-xs text-slate-500">
+              <p className="mt-2 text-xs text-[var(--muted)]">
                 {p.tasks.filter((t) => t.status === "DONE").length}/
                 {p.tasks.length} tasks done
               </p>

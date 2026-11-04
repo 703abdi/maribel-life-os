@@ -66,7 +66,7 @@ export default async function Experiments() {
           items.map((e) => (
             <div className="border-b py-3 text-sm" key={e.id}>
               <p className="font-medium">{e.hypothesis}</p>
-              <p className="text-slate-500">
+              <p className="text-[var(--muted)]">
                 {e.project?.title} · ${(e.budgetCents / 100).toFixed(2)} ·{" "}
                 {e.status}
               </p>

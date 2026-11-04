@@ -6,7 +6,7 @@ export default function Login() {
     <main className="grid min-h-dvh place-items-center p-5">
       <div className="w-full max-w-sm">
         <h1 className="mb-1 text-3xl font-bold">{BRAND.name}</h1>
-        <p className="mb-6 text-slate-500">Direct your life.</p>
+        <p className="mb-6 text-[var(--muted)]">Direct your life.</p>
         <Suspense>
           <LoginForm />
         </Suspense>

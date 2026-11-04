@@ -56,7 +56,10 @@ export default async function Inbox() {
                 <input name="id" type="hidden" value={n.id} />
                 <p className="text-sm font-medium">{n.title}</p>
                 {n.url && (
-                  <a className="text-xs text-indigo-700" href={n.url}>
+                  <a
+                    className="text-xs text-violet-200 hover:underline"
+                    href={n.url}
+                  >
                     {n.url}
                   </a>
                 )}

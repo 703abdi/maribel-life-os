@@ -23,7 +23,7 @@ export default async function Week() {
   return (
     <Page>
       <PageHeader title="Week" sub="Deadlines, plan, and available capacity" />
-      <div className="mb-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm text-slate-300">
+      <div className="mb-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-sm text-[var(--foreground)]">
         Weekly load <b className="text-white">{weeklyLoad.toFixed(1)}h</b> /{" "}
         {d.settings.weeklyAvailableHours}h available
         {weeklyLoad > d.settings.weeklyAvailableHours && (

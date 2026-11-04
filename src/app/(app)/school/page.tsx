@@ -18,7 +18,7 @@ export default async function School() {
         {classes.length ? (
           classes.map((c) => (
             <Card title={c.title} key={c.id}>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-[var(--muted)]">
                 {c.courseCode || "Course"} {c.instructor && `· ${c.instructor}`}{" "}
                 {c.scheduleText && `· ${c.scheduleText}`}
               </p>

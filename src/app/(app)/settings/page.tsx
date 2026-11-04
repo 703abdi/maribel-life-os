@@ -11,10 +11,12 @@ import {
   Page,
   PageHeader,
   btn,
+  colorInput,
   input,
   label,
   select,
 } from "@/components/ui";
+import { setupChecklist } from "@/lib/setup-checklist";
 export default async function Settings() {
   const u = await requireUser();
   const [settings, areas, classCount, jobScheduleCount] = await Promise.all([
@@ -30,11 +32,11 @@ export default async function Settings() {
     prisma.project.count({ where: { userId: u.id, kind: "CLASS" } }),
     prisma.calendarEvent.count({ where: { userId: u.id, kind: "SHIFT" } }),
   ]);
-  const detected = {
-    areas: areas.length >= 7,
-    classes: classCount > 0,
-    job: jobScheduleCount > 0,
-  };
+  const checklist = setupChecklist(settings, {
+    areaCount: areas.length,
+    classCount,
+    jobScheduleCount,
+  });
   return (
     <Page>
       <PageHeader
@@ -101,46 +103,18 @@ export default async function Settings() {
               <legend className="px-1 text-xs font-semibold">
                 First-run setup checklist
               </legend>
-              {[
-                [
-                  "setupAreasDone",
-                  "Name categories / areas",
-                  settings.setupAreasDone || detected.areas,
-                ],
-                [
-                  "setupClassesDone",
-                  "Add classes",
-                  settings.setupClassesDone || detected.classes,
-                ],
-                [
-                  "setupJobDone",
-                  "Add job & schedule",
-                  settings.setupJobDone || detected.job,
-                ],
-                [
-                  "setupTimezoneDone",
-                  "Set timezone & capacity",
-                  settings.setupTimezoneDone,
-                ],
-                [
-                  "setupPrioritiesDone",
-                  "Choose prioritization method",
-                  settings.setupPrioritiesDone,
-                ],
-                [
-                  "setupRemindersDone",
-                  "Set reminders",
-                  settings.setupRemindersDone,
-                ],
-              ].map(([k, t, checked]) => (
-                <label className="block text-sm" key={String(k)}>
+              {checklist.map((item) => (
+                <label
+                  className="block text-sm text-[var(--foreground)]"
+                  key={item.key}
+                >
                   <input
                     className="mr-2"
-                    name={String(k)}
+                    name={item.key}
                     type="checkbox"
-                    defaultChecked={Boolean(checked)}
+                    defaultChecked={item.done}
                   />
-                  {String(t)}
+                  {item.label}
                 </label>
               ))}
             </fieldset>
@@ -163,7 +137,7 @@ export default async function Settings() {
                 <label className={label}>
                   Color
                   <input
-                    className={input}
+                    className={colorInput}
                     name="color"
                     type="color"
                     defaultValue={a.color}
@@ -206,12 +180,18 @@ export default async function Settings() {
               <option>BUSINESS</option>
               <option>LEARNING</option>
             </select>
-            <input name="color" type="color" defaultValue="#4f46e5" />
+            <input
+              className={colorInput}
+              name="color"
+              type="color"
+              defaultValue="#4f46e5"
+              aria-label="Area color"
+            />
             <button className={btn.primary}>Add area</button>
           </form>
         </Card>
         <Card title="Clear sample data" className="lg:col-span-2">
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-[var(--muted)]">
             This permanently deletes only records marked Sample: sample areas,
             people, goals, projects and milestones, tasks, events, notes,
             commitments, money items, experiments, and weekly reviews. Your real

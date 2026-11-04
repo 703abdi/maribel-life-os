@@ -48,7 +48,7 @@ export default async function ProjectPage({
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title="Outcome & direction">
           <p className="text-sm">{p.outcome || "No outcome yet."}</p>
-          <p className="mt-2 text-sm text-slate-600">
+          <p className="mt-2 text-sm text-[var(--muted)]">
             {p.successDefinition || "No success definition yet."}
           </p>
           {p.goal && <Badge tone="indigo">Goal: {p.goal.title}</Badge>}{" "}
@@ -63,7 +63,7 @@ export default async function ProjectPage({
             <p key={m.id} className="border-b py-2 text-sm">
               {m.done ? "✓" : "○"} {m.title}{" "}
               {m.dueDate && (
-                <span className="text-slate-500">
+                <span className="text-[var(--muted)]">
                   · {m.dueDate.toLocaleDateString()}
                 </span>
               )}
@@ -106,7 +106,7 @@ export default async function ProjectPage({
             p.notes.map((n) => (
               <p className="border-b py-2 text-sm" key={n.id}>
                 {n.url ? (
-                  <a className="text-indigo-700" href={n.url}>
+                  <a className="text-violet-200 hover:underline" href={n.url}>
                     {n.title}
                   </a>
                 ) : (

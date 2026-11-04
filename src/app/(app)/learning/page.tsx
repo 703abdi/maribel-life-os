@@ -26,7 +26,7 @@ export default async function LearningPage() {
         {projects.length ? (
           projects.map((project) => (
             <Card key={project.id} title={project.title}>
-              <p className="text-sm text-slate-300">
+              <p className="text-sm text-[var(--foreground)]">
                 {project.outcome ||
                   "Set the outcome you want this learning project to produce."}
               </p>
@@ -35,7 +35,7 @@ export default async function LearningPage() {
                   <TaskRow key={task.id} task={task} />
                 ))}
               </div>
-              <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-[var(--muted)]">
                 Resources · {project.notes.length}
               </p>
             </Card>

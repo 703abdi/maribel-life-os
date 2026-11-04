@@ -2,15 +2,17 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 export const input =
-  "mt-1 w-full rounded-xl border border-[var(--border)] bg-[#0d1017] px-3 py-2 text-sm text-white outline-none placeholder:text-slate-600 focus:border-violet-400";
+  "mt-1 w-full rounded-xl border border-[var(--border)] bg-[#0d1017] px-3 py-2 text-sm text-[var(--foreground)] outline-none placeholder:text-[var(--muted)] focus:border-violet-400";
 export const select = input;
+export const colorInput =
+  "mt-1 h-8 w-8 min-w-8 rounded-lg border border-[var(--border)] bg-[var(--surface-raised)] p-0.5";
 export const label =
   "text-xs font-semibold uppercase tracking-wide text-[var(--muted)]";
 export const btn = {
   primary:
     "rounded-xl bg-violet-500 px-3 py-2 text-sm font-semibold text-white hover:bg-violet-400",
   secondary:
-    "rounded-xl border border-[var(--border)] bg-white/5 px-3 py-2 text-sm font-medium text-slate-200 hover:bg-white/10",
+    "rounded-xl border border-[var(--border)] bg-white/5 px-3 py-2 text-sm font-medium text-[var(--foreground)] hover:bg-white/10",
   danger:
     "rounded-xl bg-rose-500 px-3 py-2 text-sm font-semibold text-white hover:bg-rose-400",
 };
@@ -65,7 +67,7 @@ export function Card({
       }
     >
       {title && (
-        <h2 className="border-b border-[var(--border)] px-4 py-3 text-sm font-semibold text-slate-100">
+        <h2 className="border-b border-[var(--border)] px-4 py-3 text-sm font-semibold text-[var(--foreground)]">
           {title}
         </h2>
       )}
@@ -90,7 +92,7 @@ export function Badge({
   tone?: "slate" | "red" | "green" | "violet" | "indigo" | "teal" | "amber";
 }) {
   const colors = {
-    slate: "bg-slate-800 text-slate-300",
+    slate: "bg-slate-800 text-[var(--foreground)]",
     red: "bg-rose-500/15 text-rose-300",
     green: "bg-emerald-500/15 text-emerald-300",
     violet: "bg-violet-500/15 text-violet-200",

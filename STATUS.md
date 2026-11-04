@@ -9,6 +9,13 @@
 - Separate due/planned task dates, estimates, effort, waiting person and follow-up dates, project milestones, task steps, and dependencies.
 - Capacity calculations, project next-step health, sample-only deletion guard, daily protected recurrence cron, migration helper, seed URL helper, and Vitest coverage for rate limits, dates/capacity, seed URL behavior, and the clear-sample guard.
 
+## QA round 2
+
+- Task rows now use accessible foreground and muted tokens, with a mobile-safe title-and-chips layout for area, project, due date, planned date, and estimate.
+- Today and Settings use one checklist-status function, including auto-detected areas, classes, and job schedules; Today shows checklist progress and hides it after completion.
+- The desktop sidebar is a sticky, viewport-height, scrollable column; the mobile bottom navigation is fixed with safe content clearance.
+- Today’s Top 3 keeps candidates in a collapsed picker, Week has a labelled planning control, and area colors use visible 32px swatches.
+
 ## Sample data
 
 The seed intentionally uses generic, clearly prefixed Sample: records. It includes example school projects, work shifts, commitments, money items, and a small experiment. It is illustrative only and can be removed from Settings.

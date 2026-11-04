@@ -2,60 +2,63 @@ import Link from "next/link";
 import type { Category, Project, Task } from "@prisma/client";
 import { requireUser } from "@/lib/auth";
 import { todayData } from "@/modules/queries";
-import { PickPriority, TaskRow, TopThree } from "@/components/LifeWidgets";
+import { TaskRow, TopThree } from "@/components/LifeWidgets";
 import { QuickAddBar } from "@/components/tasks/QuickAddBar";
 import { Badge, Card, Empty, Page, PageHeader } from "@/components/ui";
 import { fmtDay, fmtTime } from "@/lib/dates";
+import { setupChecklist } from "@/lib/setup-checklist";
 export default async function Today() {
   const u = await requireUser(),
     d = await todayData(u.id);
-  const top = d.tasks
-    .filter((t) => t.topPriorityOn && t.status !== "DONE")
-    .slice(0, 3);
-  const checklist = [
-    d.settings.setupAreasDone,
-    d.settings.setupClassesDone,
-    d.settings.setupJobDone,
-    d.settings.setupTimezoneDone,
-    d.settings.setupPrioritiesDone,
-    d.settings.setupRemindersDone,
-  ];
+  const chosen = d.tasks.filter(
+    (t) => t.topPriorityOn && !["DONE", "CANCELED"].includes(t.status),
+  );
+  const top = chosen.slice(0, 3);
+  const checklist = setupChecklist(d.settings, d.setupSignals);
+  const completeSetupItems = checklist.filter((item) => item.done).length;
+  const candidates = d.tasks
+    .filter(
+      (t) =>
+        !["DONE", "CANCELED"].includes(t.status) &&
+        !chosen.some((chosenTask) => chosenTask.id === t.id),
+    )
+    .slice(0, 8);
   return (
     <Page>
       <PageHeader title="Today" sub={fmtDay(d.today)} />
       <QuickAddBar />
-      {checklist.some((x) => !x) && (
+      {!checklist.every((item) => item.done) && (
         <Card title="First-run setup" className="mt-4">
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-[var(--muted)]">
             Make this dashboard yours: categories, classes, job schedule,
             timezone and capacity, priorities, reminders.
           </p>
+          <ul className="mt-3 grid gap-1 text-sm text-[var(--muted)]">
+            {checklist.map((item) => (
+              <li key={item.key}>
+                <span
+                  aria-hidden="true"
+                  className={
+                    item.done ? "text-emerald-300" : "text-[var(--muted)]"
+                  }
+                >
+                  {item.done ? "✓" : "○"}
+                </span>{" "}
+                {item.label}
+              </li>
+            ))}
+          </ul>
           <Link
             href="/settings"
-            className="mt-2 inline-block text-sm font-medium text-indigo-700"
+            className="mt-3 inline-block text-sm font-semibold text-violet-200 hover:text-white hover:underline"
           >
-            Finish setup ({checklist.filter(Boolean).length}/6)
+            Finish setup ({completeSetupItems}/{checklist.length})
           </Link>
         </Card>
       )}
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <Card title="Top 3 priorities">
-          <TopThree tasks={top} />
-          {d.tasks
-            .filter(
-              (t) =>
-                !["DONE", "CANCELED"].includes(t.status) &&
-                !top.some((x) => x.id === t.id),
-            )
-            .slice(0, 8)
-            .map((t) => (
-              <div key={t.id} className="flex items-center gap-2">
-                <div className="flex-1">
-                  <TaskRow task={t} />
-                </div>
-                <PickPriority task={t} />
-              </div>
-            ))}
+          <TopThree tasks={top} candidates={candidates} />
         </Card>
         <Card title="Today's events">
           {d.events.length ? (
@@ -63,7 +66,7 @@ export default async function Today() {
               <div key={e.id} className="border-b py-2 text-sm last:border-0">
                 <b>{fmtTime(e.start)}</b> · {e.title}{" "}
                 {e.location && (
-                  <span className="text-slate-500">· {e.location}</span>
+                  <span className="text-[var(--muted)]">· {e.location}</span>
                 )}
                 <Badge tone="teal">{e.kind.replace("_", " ")}</Badge>
               </div>
@@ -87,7 +90,7 @@ export default async function Today() {
               <div key={c.id} className="border-b py-2 text-sm last:border-0">
                 {c.description}{" "}
                 {c.person && (
-                  <span className="text-slate-500">· {c.person.name}</span>
+                  <span className="text-[var(--muted)]">· {c.person.name}</span>
                 )}{" "}
                 {c.dueDate && (
                   <Badge tone={c.dueDate < d.today ? "red" : "amber"}>

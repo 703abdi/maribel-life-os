@@ -22,11 +22,14 @@ export default async function PeoplePage() {
         {people.length ? (
           people.map((person) => (
             <Card key={person.id} title={person.name}>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-[var(--muted)]">
                 {person.relationship || "Person"}
               </p>
               {person.commitments.map((commitment) => (
-                <p className="mt-3 text-sm text-slate-200" key={commitment.id}>
+                <p
+                  className="mt-3 text-sm text-[var(--foreground)]"
+                  key={commitment.id}
+                >
                   {commitment.description}
                   <br />
                   {commitment.followUpDate && (
@@ -37,7 +40,10 @@ export default async function PeoplePage() {
                 </p>
               ))}
               {person.waitingTasks.map((task) => (
-                <p className="mt-3 text-sm text-slate-300" key={task.id}>
+                <p
+                  className="mt-3 text-sm text-[var(--foreground)]"
+                  key={task.id}
+                >
                   Waiting: {task.title}
                 </p>
               ))}

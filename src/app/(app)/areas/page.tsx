@@ -31,7 +31,7 @@ export default async function Areas() {
                   />
                   <b>{a.name}</b>
                 </div>
-                <p className="mt-2 text-xs text-slate-500">
+                <p className="mt-2 text-xs text-[var(--muted)]">
                   {a._count.projects} projects · {a._count.tasks} tasks ·{" "}
                   {a._count.events} events
                 </p>

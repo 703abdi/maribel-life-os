@@ -30,9 +30,9 @@ export function TaskDetailPanel({ task }: { task: DetailTask }) {
         </Badge>
       </div>
       {task.notes && (
-        <p className="mt-3 text-sm text-slate-300">{task.notes}</p>
+        <p className="mt-3 text-sm text-[var(--foreground)]">{task.notes}</p>
       )}
-      <p className="mt-3 text-xs text-slate-500">
+      <p className="mt-3 text-xs text-[var(--muted)]">
         {task.estimateMinutes} min{" "}
         {task.dueDate ? "· due " + task.dueDate.toLocaleDateString() : ""}{" "}
         {task.plannedDate
@@ -46,19 +46,21 @@ export function TaskDetailPanel({ task }: { task: DetailTask }) {
             <form
               action={toggleTaskStep}
               key={step.id}
-              className="mt-2 flex items-center gap-2 text-sm text-slate-300"
+              className="mt-2 flex items-center gap-2 text-sm text-[var(--foreground)]"
             >
               <input name="id" type="hidden" value={step.id} />
               <button
                 className={
                   step.done
                     ? "grid h-5 w-5 place-items-center rounded border border-emerald-400 bg-emerald-400 text-xs text-black"
-                    : "h-5 w-5 rounded border border-slate-500"
+                    : "h-5 w-5 rounded border border-[var(--muted)]"
                 }
               >
                 {step.done ? "✓" : ""}
               </button>
-              <span className={step.done ? "line-through text-slate-500" : ""}>
+              <span
+                className={step.done ? "line-through text-[var(--muted)]" : ""}
+              >
                 {step.title}
               </span>
             </form>

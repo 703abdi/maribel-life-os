@@ -114,6 +114,17 @@ export async function setTopPriority(fd: FormData) {
   const u = await requireUser(),
     id = str(fd, "id"),
     on = bool(fd, "on");
+  if (on) {
+    const alreadyChosen = await prisma.task.count({
+      where: {
+        userId: u.id,
+        id: { not: id },
+        status: { notIn: ["DONE", "CANCELED"] },
+        topPriorityOn: startOfDay(),
+      },
+    });
+    if (alreadyChosen >= 3) return;
+  }
   await prisma.task.updateMany({
     where: { id, userId: u.id },
     data: { topPriorityOn: on ? startOfDay() : null },

@@ -85,9 +85,9 @@ export default async function Money() {
                 .map((x) => (
                   <div className="border-b py-2 text-sm" key={x.id}>
                     <b>{x.name}</b> · {money(x.amountCents)}{" "}
-                    <span className="text-slate-500">{x.cadence}</span>
+                    <span className="text-[var(--muted)]">{x.cadence}</span>
                     {x.kind === "SAVINGS_GOAL" && (
-                      <p className="text-xs text-teal-700">
+                      <p className="text-xs text-emerald-300">
                         {money(x.savedCents ?? 0)} / {money(x.targetCents ?? 0)}
                       </p>
                     )}

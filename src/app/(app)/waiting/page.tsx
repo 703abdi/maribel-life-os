@@ -64,7 +64,7 @@ export default async function Waiting() {
                 <p className="font-semibold text-white">{group.name}</p>
                 {group.commitments.map((commitment) => (
                   <p
-                    className="mt-2 text-sm text-slate-300"
+                    className="mt-2 text-sm text-[var(--foreground)]"
                     key={commitment.id}
                   >
                     {commitment.description}{" "}
